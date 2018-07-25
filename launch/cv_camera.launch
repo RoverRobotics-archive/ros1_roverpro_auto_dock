@@ -1,0 +1,11 @@
+<launch>
+
+  <node pkg="cv_camera" type="cv_camera_node" name="cv_camera_node">
+    <param name="device_id" value="2"/>
+    <param name="image_width" value="1280"/>
+    <param name="image_height" value="720"/>
+    <param name="cv_cap_prop_fourcc" value="MJPG"/>
+    <!--77 74 80 71-->
+  </node>
+
+</launch>
