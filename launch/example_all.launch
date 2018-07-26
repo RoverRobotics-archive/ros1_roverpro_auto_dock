@@ -10,4 +10,11 @@
     <remap from="/usb_cam/camera_info" to="/camera_info"/>
   </node>
 
+  <node pkg="aruco_detect" name="aruco_detect"
+    type="aruco_detect" output="screen" respawn="false">
+    <param name="publish_images" value="true" />
+    <param name="fiducial_len" value="0.1"/>
+    <param name="dictionary" value="8"/>
+    <param name="do_pose_estimation" value="true"/>
+  </node>
 </launch>
