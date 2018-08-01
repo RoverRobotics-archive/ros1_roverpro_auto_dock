@@ -1,13 +1,24 @@
 <launch>
 
-  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
-    <param name="video_device" value="/dev/video2" />
+  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen">
+    <param name="video_device" value="/dev/video-front" />
+    <param name="camera_frame_id" value="front_camera_link" />
     <param name="image_width" value="1280" />
     <param name="image_height" value="720" />
+    <param name="framerate" value="10" />
     <param name="pixel_format" value="mjpeg" />
     <param name="camera_info_url" value="package://rr_auto_dock/misc/ost.yaml"/><!--not sure if this is working-->
     <remap from="/usb_cam/image_raw" to="/camera"/>
     <remap from="/usb_cam/camera_info" to="/camera_info"/>
+  </node>
+
+<!--  <node pkg="tf" type="static_transform_publisher"
+    name="front_camera_tf_broadcaster" args="0 0 0 0 1.5708 0
+    base_link front_camera 100" />
+-->
+  <param name="robot_description" textfile="$(find twgc_payload)/rvizconfig/urdf/twgc.urdf" />
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="use_tf_static" value="true"/>
   </node>
 
   <node pkg="aruco_detect" name="aruco_detect"
@@ -17,4 +28,9 @@
     <param name="dictionary" value="8"/>
     <param name="do_pose_estimation" value="true"/>
   </node>
+
+<!--  <node pkg="fiducial_slam" name="fiducial_slam" type="fiducial_slam">
+   <param name="base_frame" value="front_camera_link"/>
+  </node> -->
+
 </launch>
