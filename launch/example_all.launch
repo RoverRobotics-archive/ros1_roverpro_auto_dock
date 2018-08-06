@@ -12,10 +12,6 @@
     <remap from="/usb_cam/camera_info" to="/camera_info"/>
   </node>
 
-<!--  <node pkg="tf" type="static_transform_publisher"
-    name="front_camera_tf_broadcaster" args="0 0 0 0 1.5708 0
-    base_link front_camera 100" />
--->
   <param name="robot_description" textfile="$(find twgc_payload)/rvizconfig/urdf/twgc.urdf" />
   <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
     <param name="use_tf_static" value="true"/>
@@ -23,14 +19,10 @@
 
   <node pkg="aruco_detect" name="aruco_detect"
     type="aruco_detect" output="screen" respawn="false">
-    <param name="publish_images" value="true" />
+    <param name="publish_images" value="false" />
     <param name="fiducial_len" value="0.1"/>
     <param name="dictionary" value="8"/>
     <param name="do_pose_estimation" value="true"/>
   </node>
-
-<!--  <node pkg="fiducial_slam" name="fiducial_slam" type="fiducial_slam">
-   <param name="base_frame" value="front_camera_link"/>
-  </node> -->
 
 </launch>
