@@ -25,7 +25,7 @@ class ArucoDockingManager(object):
     TURN_DURATION = abs(TURN_RADIANS/CMD_VEL_ANGULAR_RATE)
     MIN_TURN_PERIOD = 0.2
     OPENROVER_TIMER_RATE = 10. #in hz
-    SEARCHING_TIMEOUT = 120 #in seconds
+    SEARCHING_TIMEOUT = 240 #in seconds
     APPROACH_ANGLE = 0.1
     X_CENTERING_BOUND = 0.2
     Z_TRANS_OFFSET = 0 #0.5
