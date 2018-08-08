@@ -24,16 +24,14 @@ class ArucoDockingManager(object):
     TURN_RADIANS = -1.0472/2 #not exact
     TURN_DURATION = abs(TURN_RADIANS/CMD_VEL_ANGULAR_RATE)
     MIN_TURN_PERIOD = 0.2
-    OPENROVER_TIMER_RATE = 10. #in hz
     SEARCHING_TIMEOUT = 240 #in seconds
     APPROACH_ANGLE = 0.1
-    X_CENTERING_BOUND = 0.2
     Z_TRANS_OFFSET = 0 #0.5
     #K_P = 1.5
     CHECK_FOR_ARUCO_COUNTER_MAX = 3
 
     JOG_DISTANCE = 0.5
-    FINAL_APPROACH_DISTANCE = 1.5
+    FINAL_APPROACH_DISTANCE = 1.0
     WIGGLE_RADIANS = -0.5
     DOCK_ARUCO_NUM = 0
 
@@ -50,21 +48,17 @@ class ArucoDockingManager(object):
     is_in_action = False
     is_final_jog = False
     is_in_view = False
-    is_docking = True
-    is_searching = True
     is_docked = False
     is_turning = False
     is_looking = True
     is_jogging = False
-    is_final_approach = False
     is_centered = False
-    is_aproaching = False
     docking_failed = False
     last_dock_aruco_tf = Transform()
     dock_aruco_tf = Transform()
     dock_success_msg = Bool()
     dock_success_msg.data = False
-    docking_state_dict = {'searching':0, 'turning':0.5, 'centering':1, 'harsh_setup':2, 'easy_setup':3, 'approach':4, 'on_dock_aruco_lost':5, 'on_dock_charging':6, 'reversing':7}
+    docking_state_list = {'searching', 'centering', 'approach', 'final_approach', 'final_wiggle', 'docking_failed', 'docked'}
     docking_state = 'searching'
 
     def __init__(self):
@@ -77,11 +71,8 @@ class ArucoDockingManager(object):
         self.sub_aruco_detect = rospy.Subscriber("fiducial_transforms",FiducialTransformArray, self.aruco_detect_cb, queue_size=1)
         self.sub_openrover_charging = rospy.Subscriber("rr_openrover_basic/charging",Bool, self.openrover_charging_cb, queue_size=1)
         #Setup timers
-        #self.turn_timer = rospy.Timer(rospy.Duration(self.TURN_DURATION), self.openrover_turn_timer_cb)
         self.docking_timer = rospy.Timer(rospy.Duration(self.SEARCHING_TIMEOUT), self.docking_failed_cb)
         self.state_manager_timer = rospy.Timer(rospy.Duration(self.MANAGER_PERIOD), self.state_manage_cb)
-
-        #self.docking_timer.run()
 
         self.pub_dock_found.publish(self.dock_aruco_found_msg)
         self.pub_dock_success.publish(self.dock_success_msg)
@@ -116,7 +107,7 @@ class ArucoDockingManager(object):
                                 self.is_centered = True
                                 self.docking_state='approach'
                                 self.openrover_stop()
-                            rospy.loginfo(theta)
+                            #rospy.loginfo(theta)
                         else:
                             self.openrover_turn(self.cmd_vel_angular)
             else:
@@ -171,9 +162,10 @@ class ArucoDockingManager(object):
             #     self.docking_state = 'docking_failed'
 
         if self.docking_state=='docking_failed':
-            self.docking_failed = True            
+            self.docking_failed = True
+            [theta, distance] = self.fid2pos(self.dock_aruco_tf)
             #[theta, x_trans, z_trans] = self.fid2pos(self.dock_aruco_tf)
-            rospy.loginfo(self.fid2pos(self.dock_aruco_tf))
+            #rospy.loginfo(self.fid2pos(self.dock_aruco_tf))
 
         if self.docking_state=='docked':
             rospy.loginfo("Charging")
@@ -183,7 +175,7 @@ class ArucoDockingManager(object):
     def aruco_detect_cb(self, fid_tf_array):
         #rospy.loginfo("aruco CB")
         try:
-            fid_tf = fid_tf_array.transforms[self.DOCK_ARUCO_NUM]
+            fid_tf = fid_tf_array.transforms[0]
             self.last_dock_aruco_tf = self.dock_aruco_tf
             self.dock_aruco_tf = fid_tf
             self.dock_aruco_found = True
@@ -224,7 +216,7 @@ class ArucoDockingManager(object):
 
     def fid2pos(self, fid_tf):
         q_now = [fid_tf.transform.rotation.x, fid_tf.transform.rotation.y, fid_tf.transform.rotation.z, fid_tf.transform.rotation.w]
-        theta = euler_from_quaternion(q_now)
+        euler_angles = euler_from_quaternion(q_now)
         x_trans = fid_tf.transform.translation.x
         z_trans = fid_tf.transform.translation.z
         z_trans = z_trans - self.Z_TRANS_OFFSET
@@ -232,7 +224,7 @@ class ArucoDockingManager(object):
         r = math.sqrt(x_trans ** 2 + z_trans ** 2)
         #if abs(theta)<APPROACH_ANGLE:
         #rospy.loginfo("z=%fm and x=%fm", z_trans, x_trans)
-        #rospy.loginfo(theta)
+        #rospy.loginfo("Theta: %3.3f, r: %3.3f, x_trans: %3.3f, z_trans: %3.3f, x: %3.3f, y: %3.3f, z: %3.3f", theta, r, x_trans, z_trans, euler_angles[0], euler_angles[1], euler_angles[2])
         return theta, r
 
     def openrover_stop(self):
@@ -246,11 +238,6 @@ class ArucoDockingManager(object):
             self.docking_state='docked'
         self.dock_success_msg.data = charging_msg.data
         self.pub_dock_success.publish(self.dock_success_msg)
-
-    def openrover_rotate(self, turn_rate):
-        msg = TwistStamped()
-        msg.twist.angular.z = turn_rate
-        self.pub_cmd_vel.publish(msg)
 
     def docking_failed_cb(self, event):
         self.docking_failed = True
