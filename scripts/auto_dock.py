@@ -353,7 +353,7 @@ def auto_dock_main():
 if __name__ == '__main__':
     try:
         # Initialize docking node
-        rospy.init_node('rr_auto_dock', anonymous=True)
+        rospy.init_node('auto_dock', anonymous=True)
         auto_dock_main()
     except rospy.ROSInterruptException:
         pass
