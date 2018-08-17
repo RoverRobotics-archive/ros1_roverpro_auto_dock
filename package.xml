@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>rr_auto_dock</name>
-  <version>0.0.0</version>
+  <version>0.0.2</version>
   <description>The rr_auto_dock package</description>
 
   <maintainer email="jack@digilabs.io">Jack Kilian</maintainer>
@@ -18,6 +18,20 @@
   <depend>rospy</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>fiducial_msgs</depend>
+  <depend>tf</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2</depend>
+  <depend>visualization_msgs</depend>
+  <depend>image_transport</depend>
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>opencv3</depend>
+  <depend>dynamic_reconfigure</depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_export_depend>message_runtime</build_export_depend>
+  <exec_depend>message_runtime</exec_depend>
+
 
 </package>
