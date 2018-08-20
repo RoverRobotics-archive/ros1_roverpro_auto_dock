@@ -45,7 +45,7 @@ void ImageSubNode::imageCallback(const sensor_msgs::ImageConstPtr & msg) {
 
 ImageSubNode::ImageSubNode(ros::NodeHandle & nh) : it(nh)
 {
-    img_sub = it.subscribe("/teleop_cam", 1, &ImageSubNode::imageCallback, this);
+    img_sub = it.subscribe("/camera", 1, &ImageSubNode::imageCallback, this);
 
     caminfo_sub = nh.subscribe("/camera_info", 1, &ImageSubNode::camInfoCallback, this);
     image_pub = it.advertise("/repub_images", 1);
