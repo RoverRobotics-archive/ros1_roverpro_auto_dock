@@ -6,6 +6,7 @@
     <param name="fiducial_len" value="0.1"/>
     <param name="dictionary" value="8"/>
     <param name="do_pose_estimation" value="true"/>
+    <param name="doCornerRefinement" value="false"/>
   </node>
 
 </launch>

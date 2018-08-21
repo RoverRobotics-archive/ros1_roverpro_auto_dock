@@ -294,7 +294,7 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg) {
         vector <vector <Point2f> > corners, rejected;
         vector <Vec3d>  rvecs, tvecs;
 
-        aruco::detectMarkers(cv_ptr->image, dictionary, corners, ids);
+        aruco::detectMarkers(cv_ptr->image, dictionary, corners, ids, detectorParams);
         //ROS_INFO("Detected %d markers in image %d", (int)ids.size(), msg->header.seq);
 
         for (int i=0; i<ids.size(); i++) {
