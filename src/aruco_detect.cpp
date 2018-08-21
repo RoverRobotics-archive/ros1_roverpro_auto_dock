@@ -373,7 +373,7 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg) {
             pose_pub->publish(fta);
         }
 
-        if (publish_images) {
+        if (false) {
 	    image_pub.publish(cv_ptr->toImageMsg());
         }
     }
