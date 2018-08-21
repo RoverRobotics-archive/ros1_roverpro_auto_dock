@@ -1,6 +1,6 @@
 <launch>
 
-  <node pkg="aruco_detect" name="aruco_detect"
+  <node pkg="rr_auto_dock" name="aruco_detect"
     type="aruco_detect" output="screen" respawn="false">
     <param name="publish_images" value="true" />
     <param name="fiducial_len" value="0.1"/>
