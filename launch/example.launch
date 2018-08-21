@@ -7,6 +7,16 @@
     <param name="dictionary" value="8"/>
     <param name="do_pose_estimation" value="true"/>
     <param name="doCornerRefinement" value="false"/>
+
+    <!--Parameters different than opencv defaults-->
+    <param name="adaptiveThreshWinSizeMax" value="23"/>
+    <param name="adaptiveThreshWinSizeStep" value="10"/>
+    <param name="minMarkerPerimeterRate" value="0.03"/>
+    <param name="polygonalApproxAccuracyRate" value="0.1"/>
+    <param name="doCornerRefinement" value="true"/>
+    <param name="cornerRefinementMinAccuracy" value="0.1"/>
+    <param name="maxErroneousBitsInBorderRate" value="0.35"/>
+
   </node>
 
 </launch>
