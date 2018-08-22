@@ -1,8 +1,8 @@
 <launch>
 
     <!-- namespace for aruco camera input -->
-    <arg name="camera" default="/camera"/>
-    <arg name="image" default="image"/>
+    <arg name="camera" default="/usb_cam"/>
+    <arg name="image" default="/teleop_cam"/>
     <arg name="transport" default="compressed"/>
 
   <node pkg="rr_auto_dock" name="aruco_detect"
@@ -21,9 +21,12 @@
     <param name="doCornerRefinement" value="true"/>
     <param name="cornerRefinementMinAccuracy" value="0.1"/>
     <param name="maxErroneousBitsInBorderRate" value="0.35"/>
-
+    
+    <param name="image_transport" value="$(arg transport)"/>
+    <!--uncomment for not raw compresson -->
     <remap from="/camera/compressed" 
         to="$(arg camera)/$(arg image)/$(arg transport)"/>
+<!--    <remap from="/camera" to="$(arg camera)/$(arg image)"/>-->
     <remap from="/camera_info" to="$(arg camera)/camera_info"/>
 
   </node>
