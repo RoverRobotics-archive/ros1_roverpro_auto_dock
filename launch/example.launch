@@ -1,5 +1,10 @@
 <launch>
 
+    <!-- namespace for aruco camera input -->
+    <arg name="camera" default="/camera"/>
+    <arg name="image" default="image"/>
+    <arg name="transport" default="compressed"/>
+
   <node pkg="rr_auto_dock" name="aruco_detect"
     type="aruco_detect" output="screen" respawn="false">
     <param name="publish_images" value="true" />
@@ -16,6 +21,10 @@
     <param name="doCornerRefinement" value="true"/>
     <param name="cornerRefinementMinAccuracy" value="0.1"/>
     <param name="maxErroneousBitsInBorderRate" value="0.35"/>
+
+    <remap from="/camera/compressed" 
+        to="$(arg camera)/$(arg image)/$(arg transport)"/>
+    <remap from="/camera_info" to="$(arg camera)/camera_info"/>
 
   </node>
 
