@@ -3,19 +3,19 @@
     <arg name="fps_all" default="8"/>
 
   <!-- Front Camera Aruco Detect -->
-    <arg name="front_cam" default="/cam_front"/>
+    <arg name="front_cam" default="/usb_cam_front"/>
     <arg name="front_image" default="/teleop_cam"/>
     <arg name="front_transport" default="raw"/>
   <!-- Left Camera Aruco Detect -->
-    <arg name="left_cam" default="/cam_left"/>
+    <arg name="left_cam" default="/usb_cam_left"/>
     <arg name="left_image" default="/teleop_cam"/>
     <arg name="left_transport" default="raw"/>
   <!-- Right Camera Aruco Detect -->
-    <arg name="right_cam" default="/cam_right"/>
+    <arg name="right_cam" default="/usb_cam_right"/>
     <arg name="right_image" default="/teleop_cam"/>
     <arg name="right_transport" default="raw"/>
   <!-- Back Camera Aruco Detect -->
-    <arg name="back_cam" default="/cam_back"/>
+    <arg name="back_cam" default="/usb_cam_back"/>
     <arg name="back_image" default="/teleop_cam"/>
     <arg name="back_transport" default="raw"/>
 
