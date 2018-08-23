@@ -1,7 +1,8 @@
 <launch>
 
-  <!-- Front Camera Aruco Detect -->
     <arg name="fps_all" default="8"/>
+
+  <!-- Front Camera Aruco Detect -->
     <arg name="front_cam" default="/front_cam"/>
     <arg name="front_image" default="/teleop_cam"/>
     <arg name="front_transport" default="raw"/>
@@ -49,6 +50,9 @@
     <param name="image_transport" value="$(arg front_transport)"/>
     <remap from="/camera" to="$(arg front_cam)/$(arg front_image)"/>
     <remap from="/camera_info" to="$(arg front_cam)/camera_info"/>
+    <remap from="/fiducial_images" to="$(arg front_cam)/fiducial_images"/>
+    <remap from="/fiducial_transforms" to="$(arg front_cam)/fiducial_transforms"/>
+    <remap from="/fiducial_vertices" to="$(arg front_cam)/fiducial_vertices"/>
   </node>
 
 
@@ -71,6 +75,9 @@
     <param name="image_transport" value="$(arg left_transport)"/>
     <remap from="/camera" to="$(arg left_cam)/$(arg left_image)"/>
     <remap from="/camera_info" to="$(arg left_cam)/camera_info"/>
+    <remap from="/fiducial_images" to="$(arg left_cam)/fiducial_images"/>
+    <remap from="/fiducial_transforms" to="$(arg left_cam)/fiducial_transforms"/>
+    <remap from="/fiducial_vertices" to="$(arg left_cam)/fiducial_vertices"/>
   </node>
 
 </launch>
