@@ -272,7 +272,7 @@ void FiducialsNode::camInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg
 }
 
 void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg) {
-    ROS_INFO("Got image %d", msg->header.seq);
+    //ROS_INFO("Got image %d", msg->header.seq);
     frameNum++;
 
     cv_bridge::CvImagePtr cv_ptr;
@@ -295,7 +295,7 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg) {
         vector <Vec3d>  rvecs, tvecs;
 
         aruco::detectMarkers(cv_ptr->image, dictionary, corners, ids, detectorParams);
-        ROS_INFO("Detected %d markers", (int)ids.size());
+        //ROS_INFO("Detected %d markers in image %d", (int)ids.size(), msg->header.seq);
 
         for (int i=0; i<ids.size(); i++) {
             fiducial_msgs::Fiducial fid;
@@ -336,14 +336,14 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg) {
                 aruco::drawAxis(cv_ptr->image, cameraMatrix, distortionCoeffs,
                                 rvecs[i], tvecs[i], fiducial_len);
 
-                ROS_INFO("Detected id %d T %.2f %.2f %.2f R %.2f %.2f %.2f", ids[i],
+                /*ROS_INFO("Detected id %d T %.2f %.2f %.2f R %.2f %.2f %.2f", ids[i],
                          tvecs[i][0], tvecs[i][1], tvecs[i][2],
-                         rvecs[i][0], rvecs[i][1], rvecs[i][2]);
+                         rvecs[i][0], rvecs[i][1], rvecs[i][2]);*/
 
                 double angle = norm(rvecs[i]);
                 Vec3d axis = rvecs[i] / angle;
-                ROS_INFO("angle %f axis %f %f %f",
-                         angle, axis[0], axis[1], axis[2]);
+                /*ROS_INFO("angle %f axis %f %f %f",
+                         angle, axis[0], axis[1], axis[2]);*/
 
                 fiducial_msgs::FiducialTransform ft;
                 ft.fiducial_id = ids[i];
@@ -373,7 +373,7 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg) {
             pose_pub->publish(fta);
         }
 
-        if (publish_images) {
+        if (true) {
 	    image_pub.publish(cv_ptr->toImageMsg());
         }
     }
