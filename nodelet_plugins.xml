@@ -1,0 +1,7 @@
+<library path="lib/libimage_sub_nodelet">
+    <class name="rr_auto_dock/ImageSubNodelet"
+           type="rr_auto_dock::ImageSubNodelet"
+           base_class_type="nodelet::Nodelet">
+        <description>Simple nodelet re-publisher</description>
+    </class>
+</library>

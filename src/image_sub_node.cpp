@@ -34,11 +34,12 @@ class ImageSubNode {
 
 void ImageSubNode::camInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg)
 {
-    ROS_WARN("Camera info Callback");
+    //ROS_WARN("Camera info Callback");
+    int i;
 }
 
 void ImageSubNode::imageCallback(const sensor_msgs::ImageConstPtr & msg) {
-    ROS_INFO("Got image %d. Republishing", msg->header.seq);
+    //ROS_INFO("Got image %d. Republishing", msg->header.seq);
     //sensor_msgs::ImagePtr msg2 = msg;
     image_pub.publish(msg);
 }
