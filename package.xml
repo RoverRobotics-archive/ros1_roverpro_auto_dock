@@ -28,10 +28,15 @@
   <depend>cv_bridge</depend>
   <depend>opencv3</depend>
   <depend>dynamic_reconfigure</depend>
+  <depend>nodelet</depend>
 
   <build_depend>message_generation</build_depend>
   <build_export_depend>message_runtime</build_export_depend>
   <exec_depend>message_runtime</exec_depend>
 
+
+  <export>
+      <nodelet plugin="${prefix}/nodelet_plugins.xml" />
+  </export>
 
 </package>
