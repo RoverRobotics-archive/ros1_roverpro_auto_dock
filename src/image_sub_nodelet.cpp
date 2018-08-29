@@ -38,12 +38,13 @@ class ImageSubNodelet : public nodelet::Nodelet
 
     void imageCallback(const sensor_msgs::ImageConstPtr& msg) {
         //NODELET_INFO("Got height %d", msg->height);
-        NODELET_INFO("Got image %s.", msg->encoding.c_str());
+        //NODELET_INFO("Got image %s.", msg->encoding.c_str());
         image_pub.publish(msg);
     }
 
     void camInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg) {
-        NODELET_INFO("Camera info Callback");
+        //NODELET_INFO("Camera info Callback");
+        int i;
     }
 
     ros::Subscriber caminfo_sub;
