@@ -163,7 +163,7 @@ class ArucoDockingManager(object):
 
         if self.docking_state=='docking_failed':
             self.docking_failed = True
-            [theta, distance] = self.fid2pos(self.dock_aruco_tf)
+            #[theta, distance] = self.fid2pos(self.dock_aruco_tf)
             #[theta, x_trans, z_trans] = self.fid2pos(self.dock_aruco_tf)
             #rospy.loginfo(self.fid2pos(self.dock_aruco_tf))
 
@@ -263,7 +263,9 @@ class ArucoDockingManager(object):
 
 ##---Callbacks
     def undock_cb(self, event):
-        if event.data == True and self.docking_state=='docked':
+        if event.data == True and not self.docking_state=='cancelled':
+            self.openrover_stop()
+            self.full_reset()
             self.docking_state='undock'
 
     def cancel_cb(self, event):
@@ -332,7 +334,9 @@ class ArucoDockingManager(object):
             self.is_waiting=True
 
     def docking_failed_cb(self, event):
-        self.docking_failed = True
+        rospy.loginfo("Docking failed cb")
+        self.openrover_stop()
+        self.full_reset()
         self.docking_state = 'docking_failed'
         #rospy.loginfo("Docking failed")
 
