@@ -39,7 +39,7 @@ add_service_files(
 )
 
 catkin_package(
-  LIBRARIES image_sub_nodelet
+  LIBRARIES aruco_detect_nodelet
   INCLUDE_DIRS DEPENDS OpenCV
   CATKIN_DEPENDS nodelet message_runtime roscpp std_msgs
 )
@@ -65,24 +65,24 @@ target_link_libraries(aruco_detect ${catkin_LIBRARIES} ${OpenCV_LIBS})
 target_link_libraries(create_marker ${OpenCV_LIBS})
 target_link_libraries(image_sub_node ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
-# image_sub_nodelet  Stuff
-add_library(image_sub_nodelet src/image_sub_nodelet.cpp)
-target_link_libraries(image_sub_nodelet ${catkin_LIBRARIES})
+# aruco_detect_nodelet  Stuff
+add_library(aruco_detect_nodelet src/aruco_detect_nodelet.cpp)
+target_link_libraries(aruco_detect_nodelet ${catkin_LIBRARIES})
 if(catkin_EXPORTED_LIBRARIES)
-  add_dependencies(image_sub_nodelet ${catkin_EXPORTED_LIBRARIES})
+  add_dependencies(aruco_detect_nodelet ${catkin_EXPORTED_LIBRARIES})
 endif()
 #############
 ## Install ##
 #############
 
 ## Mark executables and/or libraries for installation
-install(TARGETS aruco_detect create_marker image_sub_node image_sub_nodelet
+install(TARGETS aruco_detect create_marker image_sub_node aruco_detect_nodelet
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(TARGETS image_sub_nodelet
+install(TARGETS aruco_detect_nodelet
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -92,6 +92,10 @@ install(TARGETS image_sub_nodelet
 install(FILES nodelet_plugins.xml nodelet.launch
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+install(DIRECTORY plugins/
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+) 
 
 catkin_install_python(PROGRAMS scripts/create_markers.py
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}

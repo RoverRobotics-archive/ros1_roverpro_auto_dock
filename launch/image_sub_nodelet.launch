@@ -10,7 +10,7 @@
 
   <node pkg="nodelet" type="nodelet" name="usb_cam"
            args="load usb_cam/UsbCamNodelet $(arg manager)" output="screen" >
-      <param name="video_device" value="/dev/video-front" />
+      <param name="video_device" value="/dev/video2" />
       <param name="camera_frame_id" value="front_camera_link" />
       <param name="image_width" value="1280" />
       <param name="image_height" value="720" />

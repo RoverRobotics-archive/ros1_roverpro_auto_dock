@@ -1,0 +1,7 @@
+<library path="lib/libaruco_detect_nodelet">
+    <class name="rr_auto_dock/FiducialsNodelet"
+           type="rr_auto_dock::FiducialsNodelet"
+           base_class_type="nodelet::Nodelet">
+        <description>Simple nodelet re-publisher</description>
+    </class>
+</library>

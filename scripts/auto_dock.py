@@ -163,7 +163,7 @@ class ArucoDockingManager(object):
 
         if self.docking_state=='docking_failed':
             self.docking_failed = True
-            [theta, distance] = self.fid2pos(self.dock_aruco_tf)
+            #[theta, distance] = self.fid2pos(self.dock_aruco_tf)
             #[theta, x_trans, z_trans] = self.fid2pos(self.dock_aruco_tf)
             #rospy.loginfo(self.fid2pos(self.dock_aruco_tf))
 
