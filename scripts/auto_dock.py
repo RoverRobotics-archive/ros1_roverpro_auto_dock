@@ -69,8 +69,8 @@ class ArucoDockingManager(object):
     def __init__(self):
         rospy.loginfo("Starting automatic docking.")
         #Publishers
-        self.pub_cmd_vel = rospy.Publisher('/cmd_vel/auto_dock', TwistStamped, queue_size=1)
-        self.pub_docking_state = rospy.Publisher('/auto_dock/docking_state', String, queue_size=1)
+        self.pub_cmd_vel = rospy.Publisher('/cmd_vel/auto_dock', TwistStamped, queue_size=1, latch=True)
+        self.pub_docking_state = rospy.Publisher('/auto_dock/docking_state', String, queue_size=1, latch=True)
         self.pub_docking_state.publish(self.docking_state_msg)
 
         #Intialize Subscribers
