@@ -70,7 +70,7 @@ class ArucoDockingManager(object):
         rospy.loginfo("Starting automatic docking.")
         #Publishers
         self.pub_cmd_vel = rospy.Publisher('/cmd_vel/auto_dock', TwistStamped, queue_size=1)
-        self.pub_docking_state = rospy.Publisher('/auto_dock/docking_state', String, queue_size=1)
+        self.pub_docking_state = rospy.Publisher('/auto_dock/docking_state', String, queue_size=1, latch=True)
         self.pub_docking_state.publish(self.docking_state_msg)
 
         #Intialize Subscribers
@@ -172,12 +172,23 @@ class ArucoDockingManager(object):
 
         if self.docking_state=='undock':
             if not self.is_undocking:
+                rospy.logwarn("Backup")
                 self.openrover_forward(-self.UNDOCK_DISTANCE)
                 self.is_undocking = True
             if not self.is_jogging:
-                self.docking_state='waiting'
+                self.docking_state='turning'
                 self.full_reset()
 
+        if self.docking_state=='turning':
+            if not self.is_undocking:
+                rospy.sleep(2)
+                rospy.logwarn("Turn")
+                self.openrover_turn(3.1)
+                self.is_undocking = True
+            if not self.is_jogging:
+                self.docking_state='undocked'
+                self.full_reset()
+        
         if self.docking_state=='cancelled':
             pass
 
