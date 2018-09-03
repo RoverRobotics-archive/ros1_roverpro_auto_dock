@@ -63,6 +63,8 @@ class ArucoDockingManager(object):
     last_dock_aruco_tf = Transform()
     dock_aruco_tf = Transform()
     docking_state_list = {'waiting', 'searching', 'centering', 'approach', 'final_approach', 'final_wiggle', 'docking_failed', 'docked', 'undock'}
+    action_state_list = {'turning', 'looking', 'jogging'}
+    action_state = ''
     docking_state = 'waiting'
     docking_state_msg = String()
     docking_state_msg.data = docking_state
@@ -86,28 +88,22 @@ class ArucoDockingManager(object):
         self.docking_timer = rospy.Timer(rospy.Duration(self.MAX_RUN_TIMEOUT), self.docking_failed_cb, oneshot=True)
 
     def state_manage_cb(self, event):
-        rospy.loginfo(self.docking_state)
+        rospy.loginfo('%s | %s', self.docking_state, self.action_state)
         if self.docking_state=='waiting':
-            self.is_looking = False
+            self.action_state = ''
+            break
 
         if self.docking_state=='searching':
-            if not self.is_turning:
-                self.is_looking = True
-                rospy.loginfo('searching aruco count: %i', self.check_for_aruco_counter)
-                if self.check_for_aruco_counter>self.CHECK_FOR_ARUCO_COUNTER_MAX:
-                    self.check_for_aruco_counter = 0
-                    self.is_looking = False
-                    self.openrover_turn(-self.TURN_RADIANS)
+            self.searching_state_fun()
 
         if self.docking_state=='centering':
             #wait for another detection then center
-
-            self.is_looking = True
+            self.action_state = 'looking'
             rospy.loginfo('center aruco count: %i', self.check_for_aruco_counter)
             if self.check_for_aruco_counter>1:
                  self.check_for_aruco_counter = 0
-                 self.is_looking = False
-            if self.is_in_view and not self.is_turning:
+                 self.action_state = ''
+            if self.is_in_view and not self.action_state=='turning':
                 [theta, distance] = self.fid2pos(self.dock_aruco_tf)
                 if abs(theta)>self.APPROACH_ANGLE:
                     self.openrover_turn(theta)
@@ -146,7 +142,7 @@ class ArucoDockingManager(object):
                     self.openrover_forward(self.JOG_DISTANCE)
                 #jog forward
             else:
-                if not self.is_jogging:
+                if not self.acting_state=='jogging':
                     self.is_final_jog = False
                     self.docking_state='final_approach'
                 #look, and if seen, keep jogging, else final ram
@@ -159,23 +155,20 @@ class ArucoDockingManager(object):
                 rospy.loginfo("Final Push")
                 self.openrover_forward(self.FINAL_APPROACH_DISTANCE)
                 self.is_final_jog=True
-            if not self.is_jogging:
+            if not self.action_state=='jogging':
                 final_jog_finished = True
             if self.is_final_jog and final_jog_finished:
                 self.docking_state = 'final_wiggle'
 
-        if self.docking_state=='final_wiggle':
-            if not self.is_final_wiggle:
-                self.openrover_turn(self.WIGGLE_RADIANS)
-                self.is_final_wiggle = True
-            if not self.is_turning and self.is_final_wiggle:
-                self.docking_state = 'docking_failed'
+        # if self.docking_state=='final_wiggle':
+        #     if not self.is_final_wiggle:
+        #         self.openrover_turn(self.WIGGLE_RADIANS)
+        #         self.is_final_wiggle = True
+        #     if not self.is_turning and self.is_final_wiggle:
+        #         self.docking_state = 'docking_failed'
 
         if self.docking_state=='docking_failed':
             self.docking_failed = True
-            #[theta, distance] = self.fid2pos(self.dock_aruco_tf)
-            #[theta, x_trans, z_trans] = self.fid2pos(self.dock_aruco_tf)
-            #rospy.loginfo(self.fid2pos(self.dock_aruco_tf))
 
         if self.docking_state=='docked':
             pass
@@ -193,6 +186,16 @@ class ArucoDockingManager(object):
 
         self.publish_docking_state()
         self.pub_cmd_vel.publish(self.cmd_vel_msg)
+
+    def searching_state_fun(self):
+        if self.action_state=='':
+            self.action_state = 'looking'
+            rospy.loginfo('searching aruco count: %i', self.check_for_aruco_counter)
+            if self.check_for_aruco_counter>self.CHECK_FOR_ARUCO_COUNTER_MAX:
+                self.check_for_aruco_counter = 0
+                self.action_state = ''
+                self.openrover_turn(-self.TURN_RADIANS)
+
 
     def publish_docking_state(self): #Publish docking state if it has changed
         if not (self.docking_state_msg.data == self.docking_state):
