@@ -178,6 +178,8 @@ class ArucoDockingManager(object):
                 self.openrover_stop()
                 self.docking_state = 'centering'
             else:
+                if self.action_state == 'jogging':
+                    return
                 if abs(distance) < self.FINAL_APPROACH_DISTANCE:
                     self.openrover_forward(2*self.FINAL_APPROACH_DISTANCE)
                     self.docking_state = 'final_approach'
