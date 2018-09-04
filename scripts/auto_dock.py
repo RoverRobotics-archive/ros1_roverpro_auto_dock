@@ -65,6 +65,8 @@ class ArucoDockingManager(object):
     docking_state_list = {'undocked', 'searching', 'centering', 'approach', 'final_approach', 'final_wiggle', 'docking_failed', 'docked', 'undock'}
     action_state_list = {'turning', 'count_aruco_callbacks', 'jogging', 'stopping'}
     action_state = ''
+    undocking_state_list = {'reversing', 'turning'}
+    undocking_state = ''
     docking_state = 'undocked'
     docking_state_msg = String()
     docking_state_msg.data = docking_state
@@ -80,6 +82,7 @@ class ArucoDockingManager(object):
         #Intialize Subscribers
         self.sub_aruco_detect = rospy.Subscriber("fiducial_transforms",FiducialTransformArray, self.aruco_detect_cb, queue_size=1)
         self.sub_openrover_charging = rospy.Subscriber("rr_openrover_basic/charging",Bool, self.openrover_charging_cb, queue_size=1)
+
         self.sub_undock = rospy.Subscriber("/auto_dock/undock", Bool, self.undock_cb, queue_size=1)
         self.sub_cancel_auto_dock = rospy.Subscriber("/auto_dock/cancel", Bool, self.cancel_cb, queue_size=1)
         self.sub_start = rospy.Subscriber("/auto_dock/start", Bool, self.start_cb, queue_size=1)
@@ -102,38 +105,16 @@ class ArucoDockingManager(object):
             self.approach_state_fun()
 
         if self.docking_state=='final_approach':
-            if self.is_in_view:
-                self.docking_state='approach'
-            final_jog_finished = False
-            if not self.is_final_jog:
-                rospy.loginfo("Final Push")
-                self.openrover_forward(self.FINAL_APPROACH_DISTANCE)
-                self.is_final_jog=True
-            if not self.action_state=='jogging':
-                final_jog_finished = True
-            if self.is_final_jog and final_jog_finished:
-                self.docking_state = 'final_wiggle'
+            self.final_approach_state_fun()
 
-        # if self.docking_state=='final_wiggle':
-        #     if not self.is_final_wiggle:
-        #         self.openrover_turn(self.WIGGLE_RADIANS)
-        #         self.is_final_wiggle = True
-        #     if not self.is_turning and self.is_final_wiggle:
-        #         self.docking_state = 'docking_failed'
-
-        if self.docking_state=='docking_failed':
+        if self.docking_state == 'docking_failed':
             self.docking_failed = True
 
-        if self.docking_state=='docked':
+        if self.docking_state == 'docked':
             pass
 
-        if self.docking_state=='undock':
-            if not self.is_undocking:
-                self.openrover_forward(-self.UNDOCK_DISTANCE)
-                self.is_undocking = True
-            if not self.is_jogging:
-                self.docking_state='undocked'
-                self.full_reset()
+        if self.docking_state == 'undock':
+            self.undock_state_fun()
 
         if self.docking_state=='cancelled':
             pass
@@ -141,9 +122,9 @@ class ArucoDockingManager(object):
         self.publish_docking_state()
         self.pub_cmd_vel.publish(self.cmd_vel_msg)
 
+
     def undocked_state_fun(self):
         self.action_state = ''
-        return
 
     def searching_state_fun(self):
         rospy.loginfo('searching aruco count: %i', self.aruco_callback_counter)
@@ -183,12 +164,50 @@ class ArucoDockingManager(object):
                 self.openrover_stop()
                 self.docking_state = 'centering'
             else:
-                self.openrover_forward(self.JOG_DISTANCE)
-            #jog forward
-        else:
-            if self.action_state=='':
-                self.docking_state='final_approach1'
-            #look, and if seen, keep jogging, else final ram
+                if abs(distance) < self.FINAL_APPROACH_DISTANCE:
+                    self.openrover_forward(2*self.FINAL_APPROACH_DISTANCE)
+                    self.docking_state = 'final_approach'
+                else:
+                    self.openrover_forward(self.JOG_DISTANCE)
+
+
+        # else:
+        #     if self.action_state=='':
+        #         self.docking_state='final_approach'
+        #     #look, and if seen, keep jogging, else final ram
+
+    def final_approach_state_fun(self):
+        if self.action_state == '':
+            self.docking_state = 'docking_failed'
+        # if self.is_in_view:
+        #     self.docking_state='approach'
+        # final_jog_finished = False
+        # if not self.is_final_jog:
+        #     rospy.loginfo("Final Push")
+        #     self.openrover_forward(self.FINAL_APPROACH_DISTANCE)
+        #     self.is_final_jog=True
+        # if not self.action_state=='jogging':
+        #     final_jog_finished = True
+        # if self.is_final_jog and final_jog_finished:
+        #     self.docking_state = 'final_wiggle'
+
+    def undock_state_fun(self):
+        if self.action_state == 'jogging':
+            return
+        if self.action_state == 'turning':
+            return
+        if self.undocking_state == '':
+            rospy.logwarn("Backup")
+            self.openrover_forward(-self.UNDOCK_DISTANCE)
+            self.undocking_state = 'reversing'
+            return
+        if self.undocking_state == 'reversing':
+            rospy.logwarn("Undock turning")
+            self.openrover_turn(3.1)
+            self.is_undocked = True
+            self.undocking_state = 'turning'
+            return
+        self.docking_state = 'undocked'
 
     def publish_docking_state(self): #Publish docking state if it has changed
         if not (self.docking_state_msg.data == self.docking_state):
@@ -211,6 +230,7 @@ class ArucoDockingManager(object):
         self.docking_failed = False
         self.aruco_last_time = rospy.Time()
         self.action_state=''
+        self.undocking_state = ''
         try:
             self.docking_timer.shutdown()
             rospy.loginfo('full_reset shutdown docking_timer: ')
@@ -223,12 +243,11 @@ class ArucoDockingManager(object):
             pass
 
     def openrover_forward(self, distance):
-        if self.is_jogging==False:
-            self.is_jogging = True
-            self.is_in_action = True
+        if self.action_state=='':
+            self.action_state = 'jogging'
             jog_period = abs(distance/self.CMD_VEL_LINEAR_RATE)
             rospy.loginfo('jog_period: %f', jog_period)
-            self.linear_timer = rospy.Timer(rospy.Duration(1), self.openrover_linear_timer_cb, oneshot=True)
+            self.linear_timer = rospy.Timer(rospy.Duration(jog_period), self.openrover_linear_timer_cb, oneshot=True)
             if distance>0:
                 rospy.loginfo("Moving forward")
                 self.cmd_vel_linear = self.CMD_VEL_LINEAR_RATE
@@ -248,6 +267,7 @@ class ArucoDockingManager(object):
         #if abs(theta)<APPROACH_ANGLE:
         #rospy.loginfo("z=%fm and x=%fm", z_trans, x_trans)
         #rospy.loginfo("Theta: %3.3f, r: %3.3f, x_trans: %3.3f, z_trans: %3.3f, x: %3.3f, y: %3.3f, z: %3.3f", theta, r, x_trans, z_trans, euler_angles[0], euler_angles[1], euler_angles[2])
+        rospy.loginfo("Theta: %3.3f, r: %3.3f", theta, r)
         return theta, r
 
     def openrover_stop(self):
@@ -284,7 +304,8 @@ class ArucoDockingManager(object):
         if event.data == True and not self.docking_state=='cancelled':
             self.openrover_stop()
             self.full_reset()
-            self.docking_state='undock'
+            self.docking_state = 'undock'
+            self.action_state = ''
 
     def cancel_cb(self, event):
         rospy.loginfo('cancel_cb')
@@ -362,11 +383,11 @@ class ArucoDockingManager(object):
         if self.is_docked:
             if not self.docking_state=='docked':
                 self.full_reset()
-            self.openrover_stop()
-            self.docking_state='docked'
-        elif self.is_docked and self.docking_state=='docked': #unsure if this is functioning
-            self.docking_state='undocked'
-            self.is_undocked=True
+                self.openrover_stop()
+                self.docking_state = 'docked'
+        else:
+            if self.docking_state == 'docked':
+                self.docking_state = 'undocked'
 
     def docking_failed_cb(self, event):
         rospy.loginfo("Docking failed cb")
