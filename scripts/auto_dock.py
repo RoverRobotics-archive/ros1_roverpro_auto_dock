@@ -83,7 +83,7 @@ class ArucoDockingManager(object):
         self.pub_docking_state.publish(self.docking_state_msg)
 
         #Intialize Subscribers
-        self.sub_aruco_detect = rospy.Subscriber("/aruco_detect/detections",FiducialTransformArray, self.aruco_detect_cb, queue_size=1)
+        self.sub_aruco_detect = rospy.Subscriber("/fiducial_transforms",FiducialTransformArray, self.aruco_detect_cb, queue_size=1)
         self.sub_openrover_charging = rospy.Subscriber("rr_openrover_basic/charging",Bool, self.openrover_charging_cb, queue_size=1)
 
         self.sub_undock = rospy.Subscriber("/auto_dock/undock", Bool, self.undock_cb, queue_size=1)
