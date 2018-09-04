@@ -65,6 +65,8 @@ class ArucoDockingManager(object):
     docking_state_list = {'undocked', 'searching', 'centering', 'approach', 'final_approach', 'final_wiggle', 'docking_failed', 'docked', 'undock'}
     action_state_list = {'turning', 'count_aruco_callbacks', 'jogging', 'stopping'}
     action_state = ''
+    action_state_data = ''
+    action_state_msg = String()
     undocking_state_list = {'reversing', 'turning'}
     undocking_state = ''
     docking_state = 'undocked'
@@ -76,11 +78,12 @@ class ArucoDockingManager(object):
         rospy.loginfo("Starting automatic docking.")
         #Publishers
         self.pub_cmd_vel = rospy.Publisher('/cmd_vel/auto_dock', TwistStamped, queue_size=1, latch=True)
-        self.pub_docking_state = rospy.Publisher('/auto_dock/docking_state', String, queue_size=1, latch=True)
+        self.pub_docking_state = rospy.Publisher('/auto_dock/state', String, queue_size=1, latch=True)
+        self.pub_action_state = rospy.Publisher('/auto_dock/action_state', String, queue_size=1, latch=True)
         self.pub_docking_state.publish(self.docking_state_msg)
 
         #Intialize Subscribers
-        self.sub_aruco_detect = rospy.Subscriber("fiducial_transforms",FiducialTransformArray, self.aruco_detect_cb, queue_size=1)
+        self.sub_aruco_detect = rospy.Subscriber("/aruco_detect/detections",FiducialTransformArray, self.aruco_detect_cb, queue_size=1)
         self.sub_openrover_charging = rospy.Subscriber("rr_openrover_basic/charging",Bool, self.openrover_charging_cb, queue_size=1)
 
         self.sub_undock = rospy.Subscriber("/auto_dock/undock", Bool, self.undock_cb, queue_size=1)
@@ -91,7 +94,8 @@ class ArucoDockingManager(object):
         self.docking_timer = rospy.Timer(rospy.Duration(self.MAX_RUN_TIMEOUT), self.docking_failed_cb, oneshot=True)
 
     def state_manage_cb(self, event):
-        rospy.loginfo('%s | %s', self.docking_state, self.action_state)
+        action_state_data = ('%s | %s' % (self.docking_state, self.action_state))
+        self.publish_action_state(action_state_data)
         if self.docking_state=='undocked':
             self.undocked_state_fun()
 
@@ -170,26 +174,9 @@ class ArucoDockingManager(object):
                 else:
                     self.openrover_forward(self.JOG_DISTANCE)
 
-
-        # else:
-        #     if self.action_state=='':
-        #         self.docking_state='final_approach'
-        #     #look, and if seen, keep jogging, else final ram
-
     def final_approach_state_fun(self):
         if self.action_state == '':
             self.docking_state = 'docking_failed'
-        # if self.is_in_view:
-        #     self.docking_state='approach'
-        # final_jog_finished = False
-        # if not self.is_final_jog:
-        #     rospy.loginfo("Final Push")
-        #     self.openrover_forward(self.FINAL_APPROACH_DISTANCE)
-        #     self.is_final_jog=True
-        # if not self.action_state=='jogging':
-        #     final_jog_finished = True
-        # if self.is_final_jog and final_jog_finished:
-        #     self.docking_state = 'final_wiggle'
 
     def undock_state_fun(self):
         if self.action_state == 'jogging':
@@ -213,6 +200,10 @@ class ArucoDockingManager(object):
         if not (self.docking_state_msg.data == self.docking_state):
             self.docking_state_msg.data = self.docking_state
             self.pub_docking_state.publish(self.docking_state_msg)
+
+    def publish_action_state(self, string_in): #Publish docking state if it has changed
+        self.action_state_msg.data = string_in
+        self.pub_action_state.publish(self.action_state_msg)
 
     def full_reset(self): #reset all variables to startup conditions
         self.cmd_vel_angular = 0
