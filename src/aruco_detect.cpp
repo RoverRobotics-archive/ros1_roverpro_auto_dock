@@ -44,6 +44,7 @@
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+#include <std_msgs/Bool.h>
 #include <dynamic_reconfigure/server.h>
 
 #include "fiducial_msgs/Fiducial.h"
@@ -73,6 +74,7 @@ class FiducialsNode {
 
     // if set, we publish the images that contain fiducials
     bool publish_images;
+    bool enable_detections;
 
     double fiducial_len;
 
@@ -273,6 +275,10 @@ void FiducialsNode::camInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg
 
 void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg) {
     //ROS_INFO("Got image %d", msg->header.seq);
+    if (enable_detections == false) {
+        return;
+    }
+
     frameNum++;
 
     cv_bridge::CvImagePtr cv_ptr;
@@ -385,6 +391,10 @@ void FiducialsNode::imageCallback(const sensor_msgs::ImageConstPtr & msg) {
     }
 }
 
+void FiducialsNode::enableCallback(const standard_msgs::Bool & msg) {
+    enable_detections = msg->data;
+}
+
 FiducialsNode::FiducialsNode(ros::NodeHandle & nh) : it(nh)
 {
     frameNum = 0;
@@ -405,27 +415,26 @@ FiducialsNode::FiducialsNode(ros::NodeHandle & nh) : it(nh)
     nh.param<double>("fiducial_len", fiducial_len, 0.14);
     nh.param<int>("dictionary", dicno, 7);
     nh.param<bool>("do_pose_estimation", doPoseEstimation, true);
+    
+    //publishers
     image_pub = it.advertise("/fiducial_images", 1);
-
     vertices_pub = new ros::Publisher(nh.advertise<fiducial_msgs::FiducialArray>("/fiducial_vertices", 1));
-
     pose_pub = new ros::Publisher(nh.advertise<fiducial_msgs::FiducialTransformArray>("/fiducial_transforms", 1));
 
     dictionary = aruco::getPredefinedDictionary(dicno);
 
-    img_sub = it.subscribe("/camera", 1,
-                           &FiducialsNode::imageCallback, this);
-
-    caminfo_sub = nh.subscribe("/camera_info", 1,
-			       &FiducialsNode::camInfoCallback, this);
+    img_sub = it.subscribe("/camera", 1, &FiducialsNode::imageCallback, this);
+    caminfo_sub = nh.subscribe("/camera_info", 1, &FiducialsNode::camInfoCallback, this);
+    enable_sub = nh.subscribe("enable", 1, &FiducialsNode::enableCallback, this);
+    enable_detections = false
 
     callbackType = boost::bind(&FiducialsNode::configCallback, this, _1, _2);
     configServer.setCallback(callbackType);
 
     nh.param<double>("adaptiveThreshConstant", detectorParams->adaptiveThreshConstant, 7);
-    nh.param<int>("adaptiveThreshWinSizeMax", detectorParams->adaptiveThreshWinSizeMax, 53); /* defailt 23 */
+    nh.param<int>("adaptiveThreshWinSizeMax", detectorParams->adaptiveThreshWinSizeMax, 23); /* defailt 23 */
     nh.param<int>("adaptiveThreshWinSizeMin", detectorParams->adaptiveThreshWinSizeMin, 3);
-    nh.param<int>("adaptiveThreshWinSizeStep", detectorParams->adaptiveThreshWinSizeStep, 4); /* default 10 */
+    nh.param<int>("adaptiveThreshWinSizeStep", detectorParams->adaptiveThreshWinSizeStep, 10); /* default 10 */
     nh.param<int>("cornerRefinementMaxIterations", detectorParams->cornerRefinementMaxIterations, 30);
     nh.param<double>("cornerRefinementMinAccuracy", detectorParams->cornerRefinementMinAccuracy, 0.01); /* default 0.1 */
     nh.param<int>("cornerRefinementWinSize", detectorParams->cornerRefinementWinSize, 5);
