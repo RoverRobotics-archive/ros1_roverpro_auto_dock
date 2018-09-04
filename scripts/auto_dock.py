@@ -77,6 +77,7 @@ class ArucoDockingManager(object):
     def __init__(self):
         rospy.loginfo("Starting automatic docking.")
         #Publishers
+        self.pub_aruco_detections_enable = rospy.Publisher('/aruco_detect/enable', Bool, queue_size=1, latch=True)
         self.pub_cmd_vel = rospy.Publisher('/cmd_vel/auto_dock', TwistStamped, queue_size=1, latch=True)
         self.pub_docking_state = rospy.Publisher('/auto_dock/state', String, queue_size=1, latch=True)
         self.pub_action_state = rospy.Publisher('/auto_dock/action_state', String, queue_size=1, latch=True)
@@ -97,30 +98,39 @@ class ArucoDockingManager(object):
         action_state_data = ('%s | %s' % (self.docking_state, self.action_state))
         self.publish_action_state(action_state_data)
         if self.docking_state=='undocked':
+            self.disable_aruco_detections()
             self.undocked_state_fun()
 
         if self.docking_state=='searching':
+            self.enable_aruco_detections()
             self.searching_state_fun()
 
         if self.docking_state=='centering':
+            self.enable_aruco_detections()
             self.centering_state_fun()
 
         if self.docking_state=='approach':
+            self.enable_aruco_detections()
             self.approach_state_fun()
 
         if self.docking_state=='final_approach':
+            self.enable_aruco_detections()
             self.final_approach_state_fun()
 
         if self.docking_state == 'docking_failed':
+            self.disable_aruco_detections()
             self.docking_failed = True
 
         if self.docking_state == 'docked':
+            self.disable_aruco_detections()
             pass
 
         if self.docking_state == 'undock':
+            self.disable_aruco_detections()
             self.undock_state_fun()
 
         if self.docking_state=='cancelled':
+            self.disable_aruco_detections()
             pass
 
         self.publish_docking_state()
@@ -289,6 +299,16 @@ class ArucoDockingManager(object):
                 self.cmd_vel_angular = self.CMD_VEL_ANGULAR_RATE
         self.cmd_vel_msg.twist.angular.z = self.cmd_vel_angular
 
+    def disable_aruco_detections(self):
+        disable_msg = Bool()
+        disable_msg.data = False
+        self.pub_aruco_detections_enable.publish(disable_msg)
+
+    def enable_aruco_detections(self):
+        enable_msg = Bool()
+        enable_msg.data = True
+        self.pub_aruco_detections_enable.publish(enable_msg)
+
 ##---Callbacks
     def undock_cb(self, event):
         rospy.loginfo('undock_cb')
@@ -361,6 +381,12 @@ class ArucoDockingManager(object):
             except:
                 self.is_in_view = False
 
+    def openrover_turn_timer_cb(self, event):
+        rospy.loginfo("openrover_turn_timer_cb: Turning ended")
+        self.openrover_stop()
+        self.is_turning = False
+        self.is_in_action = False
+
     def openrover_linear_timer_cb(self, event):
         rospy.loginfo("openrover_linear_timer_cb: Stop moving forward")
         self.is_jogging = False
@@ -386,13 +412,6 @@ class ArucoDockingManager(object):
         self.full_reset()
         self.docking_state = 'docking_failed'
         #rospy.loginfo("Docking failed")
-
-    def openrover_turn_timer_cb(self, event):
-        rospy.loginfo("openrover_turn_timer_cb: Turning ended")
-        self.openrover_stop()
-        self.is_turning = False
-        self.is_in_action = False
-
 
 def auto_dock_main():
     docking_manager = ArucoDockingManager()
