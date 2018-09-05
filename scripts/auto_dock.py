@@ -35,7 +35,7 @@ class ArucoDockingManager(object):
     #K_P = 1.5
     ARUCO_CALLBACK_COUNTER_MAX = 5
 
-    JOG_DISTANCE = 0.5
+    JOG_DISTANCE = 0.3
     FINAL_APPROACH_DISTANCE = 1.0
     WIGGLE_RADIANS = -0.5
     DOCK_ARUCO_NUM = 0
@@ -92,7 +92,7 @@ class ArucoDockingManager(object):
         self.sub_start = rospy.Subscriber("/auto_dock/dock", Bool, self.start_cb, queue_size=1)
         #Setup timers
         self.state_manager_timer = rospy.Timer(rospy.Duration(self.MANAGER_PERIOD), self.state_manage_cb, oneshot=False)
-        self.docking_timer = rospy.Timer(rospy.Duration(self.MAX_RUN_TIMEOUT), self.docking_failed_cb, oneshot=True)
+        #self.docking_timer = rospy.Timer(rospy.Duration(self.MAX_RUN_TIMEOUT), self.docking_failed_cb, oneshot=True)
 
     def state_manage_cb(self, event):
         action_state_data = ('%s | %s' % (self.docking_state, self.action_state))
@@ -123,7 +123,6 @@ class ArucoDockingManager(object):
 
         if self.docking_state == 'docked':
             self.disable_aruco_detections()
-            pass
 
         if self.docking_state == 'undock':
             self.disable_aruco_detections()
@@ -131,7 +130,6 @@ class ArucoDockingManager(object):
 
         if self.docking_state=='cancelled':
             self.disable_aruco_detections()
-            pass
 
         self.publish_docking_state()
         self.pub_cmd_vel.publish(self.cmd_vel_msg)
@@ -162,8 +160,8 @@ class ArucoDockingManager(object):
             self.aruco_callback_counter = 0
             self.action_state = ''
         if self.is_in_view and self.action_state=='':
-            [theta, distance] = self.fid2pos(self.dock_aruco_tf)
-            if abs(theta)>self.APPROACH_ANGLE:
+            [theta, distance, theta_bounds] = self.fid2pos(self.dock_aruco_tf)
+            if abs(theta)>theta_bounds:
                 self.openrover_turn(theta)
             else:
                 rospy.loginfo('centered switching to approach state')
@@ -172,8 +170,8 @@ class ArucoDockingManager(object):
 
     def approach_state_fun(self):
         if self.is_in_view:
-            [theta, distance] = self.fid2pos(self.dock_aruco_tf)
-            if abs(theta)>self.APPROACH_ANGLE:
+            [theta, distance, theta_bounds] = self.fid2pos(self.dock_aruco_tf)
+            if abs(theta)>theta_bounds:
                 rospy.loginfo("approach angle exceeded: %f", abs(theta))
                 self.openrover_stop()
                 self.docking_state = 'centering'
@@ -267,11 +265,15 @@ class ArucoDockingManager(object):
         z_trans = z_trans - self.Z_TRANS_OFFSET
         theta = math.atan2(x_trans, z_trans)
         r = math.sqrt(x_trans ** 2 + z_trans ** 2)
+        if r > 3.0:
+            theta_bounds = self.APPROACH_ANGLE
+        else:
+            theta_bounds = r/30.0
         #if abs(theta)<APPROACH_ANGLE:
         #rospy.loginfo("z=%fm and x=%fm", z_trans, x_trans)
         #rospy.loginfo("Theta: %3.3f, r: %3.3f, x_trans: %3.3f, z_trans: %3.3f, x: %3.3f, y: %3.3f, z: %3.3f", theta, r, x_trans, z_trans, euler_angles[0], euler_angles[1], euler_angles[2])
-        rospy.loginfo("Theta: %3.3f, r: %3.3f", theta, r)
-        return theta, r
+        rospy.loginfo("Theta: %3.3f, r: %3.3f, theta_bounds: %3.3f", theta, r, theta_bounds)
+        return theta, r, theta_bounds
 
     def openrover_stop(self):
         self.action_state = ''
@@ -376,6 +378,7 @@ class ArucoDockingManager(object):
                 self.dock_aruco_tf = fid_tf
                 self.is_in_view = True
                 rospy.loginfo('marker detected')
+                [theta, r, theta_bounds] = self.fid2pos(self.dock_aruco_tf) #for debugging
                 if self.docking_state=='searching':
                     self.openrover_stop()
                     self.aruco_callback_counter = 0
