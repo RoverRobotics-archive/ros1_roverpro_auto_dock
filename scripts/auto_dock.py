@@ -207,8 +207,13 @@ class ArucoDockingManager(object):
                     self.set_docking_state('final_approach')
                 else:
                     self.openrover_forward(self.JOG_DISTANCE)
+        else:
+            self.set_docking_state('final_approach')
 
     def final_approach_state_fun(self):
+        if self.is_in_view:
+            self.set_docking_state('approach')
+            return
         if self.action_state == '':
             self.set_docking_state('docking_failed')
 
