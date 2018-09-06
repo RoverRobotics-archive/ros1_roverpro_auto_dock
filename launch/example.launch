@@ -1,0 +1,34 @@
+<launch>
+
+    <!-- namespace for aruco camera input -->
+    <arg name="camera" default="/usb_cam"/>
+    <arg name="image" default="/teleop_cam"/>
+    <arg name="transport" default="raw"/>
+
+  <node pkg="rr_auto_dock" name="aruco_detect"
+    type="aruco_detect" output="screen" respawn="false">
+    <param name="publish_images" value="true" />
+    <param name="fiducial_len" value="0.1"/>
+    <param name="dictionary" value="8"/>
+    <param name="do_pose_estimation" value="true"/>
+    <param name="doCornerRefinement" value="false"/>
+
+    <!--Parameters different than opencv defaults-->
+    <param name="adaptiveThreshWinSizeMax" value="23"/>
+    <param name="adaptiveThreshWinSizeStep" value="10"/>
+    <param name="minMarkerPerimeterRate" value="0.03"/>
+    <param name="polygonalApproxAccuracyRate" value="0.1"/>
+    <param name="doCornerRefinement" value="true"/>
+    <param name="cornerRefinementMinAccuracy" value="0.1"/>
+    <param name="maxErroneousBitsInBorderRate" value="0.35"/>
+    
+    <param name="image_transport" value="$(arg transport)"/>
+    <!--uncomment for not raw compresson
+    <remap from="/camera/compressed" 
+        to="$(arg camera)/$(arg image)/$(arg transport)"/>-->
+    <remap from="/camera" to="$(arg camera)/$(arg image)"/>
+    <remap from="/camera_info" to="$(arg camera)/camera_info"/>
+
+  </node>
+
+</launch>
