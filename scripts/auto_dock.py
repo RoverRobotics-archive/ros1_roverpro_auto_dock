@@ -29,6 +29,7 @@ class ArucoDockingManager(object):
     ARUCO_WAIT_TIMEOUT = 2 #in seconds
 
     CANCELLED_TIMEOUT = 10 #in seconds
+    START_DELAY = 2.0
 
     APPROACH_ANGLE = 0.1
     Z_TRANS_OFFSET = 0 #0.5
@@ -374,7 +375,7 @@ class ArucoDockingManager(object):
     def start_cb(self, event):
         rospy.loginfo("start_cb")
         self.openrover_stop()
-        rospy.
+        rospy.sleep(self.START_DELAY)
         if event.data and not (self.docking_state=='docked'):
             self.set_docking_state('searching')
             self.docking_timer = rospy.Timer(rospy.Duration(self.MAX_RUN_TIMEOUT), self.docking_failed_cb, oneshot=True)
