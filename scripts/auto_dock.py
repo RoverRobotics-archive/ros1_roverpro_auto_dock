@@ -41,7 +41,7 @@ class ArucoDockingManager(object):
     DOCK_ARUCO_NUM = 0
     UNDOCK_DISTANCE = 1.0
 
-    MAX_CENTERING_COUNT = 100
+    MAX_CENTERING_COUNT = 50
 
     check_for_aruco = False
     aruco_callback_counter = 0
@@ -208,11 +208,15 @@ class ArucoDockingManager(object):
                 else:
                     self.openrover_forward(self.JOG_DISTANCE)
         else:
+            self.openrover_forward(2*self.FINAL_APPROACH_DISTANCE)
             self.set_docking_state('final_approach')
 
     def final_approach_state_fun(self):
         if self.is_in_view:
+            self.openrover_stop()
             self.set_docking_state('approach')
+            return
+        if self.action_state == 'jogging':
             return
         if self.action_state == '':
             self.set_docking_state('docking_failed')
@@ -444,8 +448,8 @@ class ArucoDockingManager(object):
 
     def docking_failed_cb(self, event):
         rospy.loginfo("Docking failed cb")
-        self.openrover_stop()
         self.full_reset()
+        self.openrover_stop()
         self.set_docking_state('docking_failed')
         #rospy.loginfo("Docking failed")
 
