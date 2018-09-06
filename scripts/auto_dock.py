@@ -192,6 +192,7 @@ class ArucoDockingManager(object):
                 self.openrover_stop()
 
     def approach_state_fun(self):
+        self.centering_counter = 0
         if self.is_in_view:
             [theta, distance, theta_bounds] = self.fid2pos(self.dock_aruco_tf)
             if abs(theta)>theta_bounds:
@@ -372,6 +373,8 @@ class ArucoDockingManager(object):
 
     def start_cb(self, event):
         rospy.loginfo("start_cb")
+        self.openrover_stop()
+        rospy.
         if event.data and not (self.docking_state=='docked'):
             self.set_docking_state('searching')
             self.docking_timer = rospy.Timer(rospy.Duration(self.MAX_RUN_TIMEOUT), self.docking_failed_cb, oneshot=True)
