@@ -215,10 +215,11 @@ class ArucoDockingManager(object):
             self.set_docking_state('final_approach')
 
     def final_approach_state_fun(self):
-        # if self.is_in_view:
-        #     self.openrover_stop()
-        #     self.set_docking_state('approach')
-        #     return
+        [theta, distance, theta_bounds] = self.fid2pos(self.dock_aruco_tf)
+        if self.is_in_view and abs(distance) >self.FINAL_APPROACH_DISTANCE:
+            self.openrover_stop()
+            self.set_docking_state('approach')
+            return
         if self.action_state == 'jogging':
             return
         if self.action_state == '':
