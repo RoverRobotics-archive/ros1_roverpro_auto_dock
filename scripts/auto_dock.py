@@ -122,7 +122,6 @@ class ArucoDockingManager(object):
 
         if self.docking_state == 'docking_failed':
             self.disable_aruco_detections()
-            self.docking_failed = True
 
         if self.docking_state == 'docked':
             self.disable_aruco_detections()
@@ -203,11 +202,13 @@ class ArucoDockingManager(object):
                 if self.action_state == 'jogging':
                     return
                 if abs(distance) < self.FINAL_APPROACH_DISTANCE:
+                    self.openrover_stop()
                     self.openrover_forward(2*self.FINAL_APPROACH_DISTANCE)
                     self.set_docking_state('final_approach')
                 else:
                     self.openrover_forward(self.JOG_DISTANCE)
         else:
+            self.openrover_stop()
             self.openrover_forward(2*self.FINAL_APPROACH_DISTANCE)
             self.set_docking_state('final_approach')
 
@@ -219,6 +220,7 @@ class ArucoDockingManager(object):
         if self.action_state == 'jogging':
             return
         if self.action_state == '':
+            self.full_reset()
             self.set_docking_state('docking_failed')
 
     def undock_state_fun(self):
