@@ -29,6 +29,7 @@ class ArucoDockingManager(object):
     ARUCO_WAIT_TIMEOUT = 2 #in seconds
 
     CANCELLED_TIMEOUT = 10 #in seconds
+    START_DELAY = 2.0
 
     APPROACH_ANGLE = 0.1
     Z_TRANS_OFFSET = 0 #0.5
@@ -41,7 +42,7 @@ class ArucoDockingManager(object):
     DOCK_ARUCO_NUM = 0
     UNDOCK_DISTANCE = 1.0
 
-    MAX_CENTERING_COUNT = 100
+    MAX_CENTERING_COUNT = 50
 
     check_for_aruco = False
     aruco_callback_counter = 0
@@ -121,7 +122,6 @@ class ArucoDockingManager(object):
 
         if self.docking_state == 'docking_failed':
             self.disable_aruco_detections()
-            self.docking_failed = True
 
         if self.docking_state == 'docked':
             self.disable_aruco_detections()
@@ -192,6 +192,7 @@ class ArucoDockingManager(object):
                 self.openrover_stop()
 
     def approach_state_fun(self):
+        self.centering_counter = 0
         if self.is_in_view:
             [theta, distance, theta_bounds] = self.fid2pos(self.dock_aruco_tf)
             if abs(theta)>theta_bounds:
@@ -202,18 +203,26 @@ class ArucoDockingManager(object):
                 if self.action_state == 'jogging':
                     return
                 if abs(distance) < self.FINAL_APPROACH_DISTANCE:
+                    self.openrover_stop()
                     self.openrover_forward(2*self.FINAL_APPROACH_DISTANCE)
                     self.set_docking_state('final_approach')
                 else:
                     self.openrover_forward(self.JOG_DISTANCE)
         else:
+            self.openrover_stop()
+            self.openrover_forward(2*self.FINAL_APPROACH_DISTANCE)
             self.set_docking_state('final_approach')
 
     def final_approach_state_fun(self):
-        if self.is_in_view:
+        [theta, distance, theta_bounds] = self.fid2pos(self.dock_aruco_tf)
+        if self.is_in_view and abs(distance) >self.FINAL_APPROACH_DISTANCE:
+            self.openrover_stop()
             self.set_docking_state('approach')
             return
+        if self.action_state == 'jogging':
+            return
         if self.action_state == '':
+            self.full_reset()
             self.set_docking_state('docking_failed')
 
     def undock_state_fun(self):
@@ -365,6 +374,8 @@ class ArucoDockingManager(object):
 
     def start_cb(self, event):
         rospy.loginfo("start_cb")
+        self.openrover_stop()
+        rospy.sleep(self.START_DELAY)
         if event.data and not (self.docking_state=='docked'):
             self.set_docking_state('searching')
             self.docking_timer = rospy.Timer(rospy.Duration(self.MAX_RUN_TIMEOUT), self.docking_failed_cb, oneshot=True)
@@ -443,8 +454,8 @@ class ArucoDockingManager(object):
 
     def docking_failed_cb(self, event):
         rospy.loginfo("Docking failed cb")
-        self.openrover_stop()
         self.full_reset()
+        self.openrover_stop()
         self.set_docking_state('docking_failed')
         #rospy.loginfo("Docking failed")
 
