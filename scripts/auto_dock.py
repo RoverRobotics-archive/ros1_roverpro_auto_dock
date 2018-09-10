@@ -99,7 +99,6 @@ class ArucoDockingManager(object):
         #self.docking_timer = rospy.Timer(rospy.Duration(self.MAX_RUN_TIMEOUT), self.docking_failed_cb, oneshot=True)
 
     def state_manage_cb(self, event):
-        rospy.loginfo("%s | %s", self.docking_state, self.last_docking_state)
         if self.docking_state=='undocked':
             self.disable_aruco_detections()
             self.undocked_state_fun()
