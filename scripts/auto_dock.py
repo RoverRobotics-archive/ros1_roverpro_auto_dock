@@ -19,9 +19,9 @@ from tf.transformations import *
 
 class ArucoDockingManager(object):
     MANAGER_PERIOD = 0.1
-    CMD_VEL_ANGULAR_RATE = 0.75 #rad/s negative is clockwise
-    CMD_VEL_LINEAR_RATE = 0.5 #m/s
-    TURN_RADIANS = -1.0472/2 #not exact
+    CMD_VEL_ANGULAR_RATE = 1 #rad/s negative is clockwise
+    CMD_VEL_LINEAR_RATE = 0.3 #m/s
+    TURN_RADIANS = -0.9 #a little less than the FOV of the cameras
     TURN_DURATION = abs(TURN_RADIANS/CMD_VEL_ANGULAR_RATE)
     MIN_TURN_PERIOD = 0.18
     MAX_RUN_TIMEOUT = 240 #in seconds
@@ -30,6 +30,7 @@ class ArucoDockingManager(object):
 
     CANCELLED_TIMEOUT = 10 #in seconds
     START_DELAY = 2.0
+    MOTOR_RESPONSE_DELAY = 0.2
 
     APPROACH_ANGLE = 0.1
     Z_TRANS_OFFSET = 0 #0.5
@@ -100,7 +101,6 @@ class ArucoDockingManager(object):
         #self.docking_timer = rospy.Timer(rospy.Duration(self.MAX_RUN_TIMEOUT), self.docking_failed_cb, oneshot=True)
 
     def state_manage_cb(self, event):
-        rospy.loginfo("%s | %s", self.docking_state, self.last_docking_state)
         if self.docking_state=='undocked':
             self.disable_aruco_detections()
             self.undocked_state_fun()
@@ -155,7 +155,7 @@ class ArucoDockingManager(object):
         self.set_action_state('')
 
     def searching_state_fun(self):
-        rospy.loginfo('searching aruco count: %i', self.aruco_callback_counter)
+        #rospy.loginfo('searching aruco count: %i', self.aruco_callback_counter)
         self.centering_counter = 0
         if self.action_state=='turning':
             return
@@ -171,7 +171,7 @@ class ArucoDockingManager(object):
         #rospy.loginfo('centering aruco count: %i', self.aruco_callback_counter)
         if self.action_state=='turning':
             return
-        if self.aruco_callback_counter < 1:
+        if self.aruco_callback_counter < 2:
             self.centering_counter = self.centering_counter + 1
             self.set_action_state('count_aruco_callbacks')
             return
@@ -238,7 +238,7 @@ class ArucoDockingManager(object):
             return
         if self.undocking_state == 'reversing':
             rospy.logwarn("Undock turning")
-            self.openrover_turn(3.1)
+            self.openrover_turn(5)
             self.is_undocked = True
             self.undocking_state = 'turning'
             return
@@ -330,9 +330,9 @@ class ArucoDockingManager(object):
     def openrover_turn(self, radians):
         if self.action_state=='':
             self.set_action_state('turning')
-            turn_period = abs(radians/self.CMD_VEL_ANGULAR_RATE)
-            if turn_period < self.MIN_TURN_PERIOD:
-                turn_period = self.MIN_TURN_PERIOD
+            turn_period = abs(radians/self.CMD_VEL_ANGULAR_RATE) + self.MOTOR_RESPONSE_DELAY
+            # if turn_period < self.MIN_TURN_PERIOD:
+            #     turn_period = self.MIN_TURN_PERIOD
             self.turn_timer = rospy.Timer(rospy.Duration(turn_period), self.openrover_turn_timer_cb, oneshot=True)
             if radians>0:
                 rospy.loginfo("Turn right for %f", turn_period)
@@ -410,7 +410,7 @@ class ArucoDockingManager(object):
 
             if self.action_state == 'count_aruco_callbacks': #pause while looking for a certain number of images
                 self.aruco_callback_counter = self.aruco_callback_counter + 1
-                #rospy.loginfo("Aruco count")
+                rospy.loginfo("Aruco count %i", self.aruco_callback_counter)
             else:
                 self.aruco_callback_counter = 0
             try:
