@@ -21,7 +21,7 @@ class ArucoDockingManager(object):
     MANAGER_PERIOD = 0.1
     CMD_VEL_ANGULAR_RATE = 1 #rad/s negative is clockwise
     CMD_VEL_LINEAR_RATE = 0.3 #m/s
-    TURN_RADIANS = -0.9 #a little less than the FOV of the cameras
+    TURN_RADIANS = -1.8 #a little less than the FOV of the cameras
     TURN_DURATION = abs(TURN_RADIANS/CMD_VEL_ANGULAR_RATE)
     MIN_TURN_PERIOD = 0.18
     MAX_RUN_TIMEOUT = 240 #in seconds
@@ -38,7 +38,7 @@ class ArucoDockingManager(object):
     ARUCO_CALLBACK_COUNTER_MAX = 5
 
     JOG_DISTANCE = 0.3
-    FINAL_APPROACH_DISTANCE = 1.0
+    FINAL_APPROACH_DISTANCE = 1.5
     WIGGLE_RADIANS = -0.5
     DOCK_ARUCO_NUM = 0
     UNDOCK_DISTANCE = 1.0
