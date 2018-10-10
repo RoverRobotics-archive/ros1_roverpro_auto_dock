@@ -1,2 +1,2 @@
 # rr_auto_dock
-This package allows you to autonomously dock any of the open rovers using just a camera. 
+Documentation for this package can be found at http://wiki.ros.org/rr_auto_dock
