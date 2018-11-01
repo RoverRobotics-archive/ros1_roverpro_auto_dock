@@ -311,7 +311,7 @@ class ArucoDockingManager(object):
         #if abs(theta)<APPROACH_ANGLE:
         #rospy.loginfo("z=%fm and x=%fm", z_trans, x_trans)
         #rospy.loginfo("Theta: %3.3f, r: %3.3f, x_trans: %3.3f, z_trans: %3.3f, x: %3.3f, y: %3.3f, z: %3.3f", theta, r, x_trans, z_trans, euler_angles[0], euler_angles[1], euler_angles[2])
-        rospy.loginfo("Theta: %3.3f, r: %3.3f, theta_bounds: %3.3f", theta, r, theta_bounds)
+        #rospy.loginfo("Theta: %3.3f, r: %3.3f, theta_bounds: %3.3f", theta, r, theta_bounds)
         return theta, r, theta_bounds
 
     def openrover_stop(self):
@@ -419,9 +419,10 @@ class ArucoDockingManager(object):
                 self.last_dock_aruco_tf = self.dock_aruco_tf
                 self.dock_aruco_tf = fid_tf
                 self.is_in_view = True
-                rospy.loginfo('marker detected')
+                #rospy.loginfo('marker detected')
                 [theta, r, theta_bounds] = self.fid2pos(self.dock_aruco_tf) #for debugging
                 if self.docking_state=='searching':
+                    rospy.loginfo('marker detected')
                     self.openrover_stop()
                     self.aruco_callback_counter = 0
                     self.set_docking_state('centering')
