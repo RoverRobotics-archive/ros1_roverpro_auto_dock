@@ -42,6 +42,7 @@ class ArucoDockingManager(object):
     WIGGLE_RADIANS = -0.5
     DOCK_ARUCO_NUM = 0
     UNDOCK_DISTANCE = 1.0
+    UNDOCK_TURN_AMOUNT = 6
 
     MAX_CENTERING_COUNT = 50
 
@@ -238,7 +239,7 @@ class ArucoDockingManager(object):
             return
         if self.undocking_state == 'reversing':
             rospy.logwarn("Undock turning")
-            self.openrover_turn(5)
+            self.openrover_turn(self.UNDOCK_TURN_AMOUNT)
             self.is_undocked = True
             self.undocking_state = 'turning'
             return
