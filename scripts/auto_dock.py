@@ -3,9 +3,6 @@
 # Author: Jack Kilian
 # Description: This script auto_docks the openrover basic platform if it is in a 3m circle in front of the dock.
 
-import numpy as np
-import os
-import time
 import math
 
 import rospy
