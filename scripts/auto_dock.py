@@ -23,14 +23,14 @@ class ArucoDockingManager(object):
         self.CMD_VEL_ANGULAR_RATE = 1 #rad/s negative is clockwise
         self.CMD_VEL_LINEAR_RATE = 0.3 #m/s
         self.TURN_RADIANS = -1 #a little less than the FOV of the cameras
-        self.MIN_TURN_PERIOD = 0.18
+        self.MIN_TURN_PERIOD = 0.1
         self.MAX_RUN_TIMEOUT = 240 #in seconds
         self.ARUCO_SLOW_WARN_TIMEOUT = rospy.Duration(1) #in seconds
         self.ARUCO_WAIT_TIMEOUT = 2 #in seconds
 
         self.CANCELLED_TIMEOUT = 10 #in seconds
         self.START_DELAY = 2.0
-        self.MOTOR_RESPONSE_DELAY = 0.2
+        self.MOTOR_RESPONSE_DELAY = 0.1
 
         self.APPROACH_ANGLE = 0.1
         self.Z_TRANS_OFFSET = 0 #0.5
@@ -41,7 +41,7 @@ class ArucoDockingManager(object):
         self.WIGGLE_RADIANS = -0.5
         self.DOCK_ARUCO_NUM = 0
         self.UNDOCK_DISTANCE = 1.0
-        self.UNDOCK_TURN_AMOUNT = 6
+        self.UNDOCK_TURN_AMOUNT = 3
 
         self.MAX_CENTERING_COUNT = 50
 
