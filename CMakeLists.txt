@@ -4,6 +4,7 @@ project(rr_auto_dock)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
+  std_srvs
   geometry_msgs
   tf
   tf2_geometry_msgs
