@@ -95,7 +95,8 @@ class ArucoDockingManager(object):
         self.sub_start = rospy.Subscriber("/auto_dock/dock", Bool, self.start_cb, queue_size=1)
 
         #Services
-        self.set_enable_detections = rospy.ServiceProxy('enable_detections', SetBool)
+        rospy.wait_for_service('/aruco_detect/enable_detections')
+        self.set_enable_detections = rospy.ServiceProxy('/aruco_detect/enable_detections', SetBool)
 
 
 
@@ -345,20 +346,19 @@ class ArucoDockingManager(object):
         self.cmd_vel_msg.twist.angular.z = self.cmd_vel_angular
 
     def disable_aruco_detections(self):
-        rospy.wait_for_service('enable_detections')
         try:
             resp = self.set_enable_detections(False)
             return
         except rospy.ServiceException, e:
-            rospy.logwarn("Service call failed: %s")
+            print "Service call failed: %s"%e
 
     def enable_aruco_detections(self):
-        rospy.wait_for_service('enable_detections')
         try:
             resp = self.set_enable_detections(True)
             return
         except rospy.ServiceException, e:
-            rospy.logwarn("Service call failed: %s")
+            print "Service call failed: %s"%e
+            #rospy.logwarn("Service call failed: %s")
 
 ##---Callbacks
     def undock_cb(self, event):
