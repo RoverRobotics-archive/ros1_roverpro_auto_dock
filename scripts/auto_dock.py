@@ -11,80 +11,80 @@ from geometry_msgs.msg import Twist
 from geometry_msgs.msg import TwistStamped
 from geometry_msgs.msg import Transform
 from fiducial_msgs.msg import FiducialTransformArray
-#from tf.msgs import tf
 from tf.transformations import *
+from std_srvs import SetBool
 
 class ArucoDockingManager(object):
-    MANAGER_PERIOD = 0.1
-    CMD_VEL_ANGULAR_RATE = 1 #rad/s negative is clockwise
-    CMD_VEL_LINEAR_RATE = 0.3 #m/s
-    TURN_RADIANS = -1 #a little less than the FOV of the cameras
-    MIN_TURN_PERIOD = 0.18
-    MAX_RUN_TIMEOUT = 240 #in seconds
-    ARUCO_SLOW_WARN_TIMEOUT = rospy.Duration(1) #in seconds
-    ARUCO_WAIT_TIMEOUT = 2 #in seconds
-
-    CANCELLED_TIMEOUT = 10 #in seconds
-    START_DELAY = 2.0
-    MOTOR_RESPONSE_DELAY = 0.2
-
-    APPROACH_ANGLE = 0.1
-    Z_TRANS_OFFSET = 0 #0.5
-    #K_P = 1.5
-    ARUCO_CALLBACK_COUNTER_MAX = 5
-
-    JOG_DISTANCE = 0.3
-    FINAL_APPROACH_DISTANCE = 1.5
-    WIGGLE_RADIANS = -0.5
-    DOCK_ARUCO_NUM = 0
-    UNDOCK_DISTANCE = 1.0
-    UNDOCK_TURN_AMOUNT = 6
-
-    MAX_CENTERING_COUNT = 50
-
-    check_for_aruco = False
-    aruco_callback_counter = 0
-    centering_counter = 0
-
-    cmd_vel_angular = 0
-    cmd_vel_linear = 0
-    cmd_vel_msg = TwistStamped()
-
-    is_final_wiggle = False
-    is_in_action = False
-    is_final_jog = False
-    is_in_view = False
-    is_docked = False
-    is_turning = False
-    is_looking = False
-    is_jogging = False
-    is_undocked = True
-    is_undocking = False
-    docking_failed = False
-    aruco_last_time = rospy.Time()
-    last_dock_aruco_tf = Transform()
-    dock_aruco_tf = Transform()
-    docking_state_list = {'undocked', 'searching', 'centering', 'approach', 'final_approach', 'final_wiggle', 'docking_failed', 'docked', 'undock'}
-    action_state_list = {'turning', 'count_aruco_callbacks', 'jogging', 'stopping'}
-    action_state = ''
-    action_state_data = ''
-    action_state_msg = String()
-    undocking_state_list = {'reversing', 'turning'}
-    undocking_state = ''
-    docking_state = 'undocked'
-    docking_state_msg = String()
-    docking_state_msg.data = docking_state
-    last_docking_state = ''
-    last_action_state = ''
 
     def __init__(self):
         rospy.loginfo("Starting automatic docking.")
+        #Constants
+        self.MANAGER_PERIOD = 0.1
+        self.CMD_VEL_ANGULAR_RATE = 1 #rad/s negative is clockwise
+        self.CMD_VEL_LINEAR_RATE = 0.3 #m/s
+        self.TURN_RADIANS = -1 #a little less than the FOV of the cameras
+        self.MIN_TURN_PERIOD = 0.18
+        self.MAX_RUN_TIMEOUT = 240 #in seconds
+        self.ARUCO_SLOW_WARN_TIMEOUT = rospy.Duration(1) #in seconds
+        self.ARUCO_WAIT_TIMEOUT = 2 #in seconds
+
+        self.CANCELLED_TIMEOUT = 10 #in seconds
+        self.START_DELAY = 2.0
+        self.MOTOR_RESPONSE_DELAY = 0.2
+
+        self.APPROACH_ANGLE = 0.1
+        self.Z_TRANS_OFFSET = 0 #0.5
+        self.ARUCO_CALLBACK_COUNTER_MAX = 5
+
+        self.JOG_DISTANCE = 0.3
+        self.FINAL_APPROACH_DISTANCE = 1.5
+        self.WIGGLE_RADIANS = -0.5
+        self.DOCK_ARUCO_NUM = 0
+        self.UNDOCK_DISTANCE = 1.0
+        self.UNDOCK_TURN_AMOUNT = 6
+
+        self.MAX_CENTERING_COUNT = 50
+
+        self.check_for_aruco = False
+        self.aruco_callback_counter = 0
+        self.centering_counter = 0
+
+        self.cmd_vel_angular = 0
+        self.cmd_vel_linear = 0
+        self.cmd_vel_msg = TwistStamped()
+
+        self.is_final_wiggle = False
+        self.is_in_action = False
+        self.is_final_jog = False
+        self.is_in_view = False
+        self.is_docked = False
+        self.is_turning = False
+        self.is_looking = False
+        self.is_jogging = False
+        self.is_undocked = True
+        self.is_undocking = False
+        self.docking_failed = False
+        self.aruco_last_time = rospy.Time()
+        self.last_dock_aruco_tf = Transform()
+        self.dock_aruco_tf = Transform()
+        self.docking_state_list = {'undocked', 'searching', 'centering', 'approach', 'final_approach', 'final_wiggle', 'docking_failed', 'docked', 'undock'}
+        self.action_state_list = {'turning', 'count_aruco_callbacks', 'jogging', 'stopping'}
+        self.action_state = ''
+        self.action_state_data = ''
+        self.action_state_msg = String()
+        self.undocking_state_list = {'reversing', 'turning'}
+        self.undocking_state = ''
+        self.docking_state = 'undocked'
+        self.docking_state_msg = String()
+        self.docking_state_msg.data = docking_state
+        self.last_docking_state = ''
+        self.last_action_state = ''
+
         #Publishers
         self.pub_aruco_detections_enable = rospy.Publisher('/aruco_detect/enable', Bool, queue_size=1, latch=True)
         self.pub_cmd_vel = rospy.Publisher('/cmd_vel/auto_dock', TwistStamped, queue_size=1, latch=True)
         self.pub_docking_state = rospy.Publisher('/auto_dock/state', String, queue_size=1, latch=True)
         self.pub_action_state = rospy.Publisher('/auto_dock/action_state', String, queue_size=1, latch=True)
-        self.pub_docking_state.publish(self.docking_state_msg)
 
         #Intialize Subscribers
         self.sub_aruco_detect = rospy.Subscriber("/fiducial_transforms",FiducialTransformArray, self.aruco_detect_cb, queue_size=1)
@@ -93,9 +93,13 @@ class ArucoDockingManager(object):
         self.sub_undock = rospy.Subscriber("/auto_dock/undock", Bool, self.undock_cb, queue_size=1)
         self.sub_cancel_auto_dock = rospy.Subscriber("/auto_dock/cancel", Bool, self.cancel_cb, queue_size=1)
         self.sub_start = rospy.Subscriber("/auto_dock/dock", Bool, self.start_cb, queue_size=1)
+
+        #Services
+
+
+
         #Setup timers
         self.state_manager_timer = rospy.Timer(rospy.Duration(self.MANAGER_PERIOD), self.state_manage_cb, oneshot=False)
-        #self.docking_timer = rospy.Timer(rospy.Duration(self.MAX_RUN_TIMEOUT), self.docking_failed_cb, oneshot=True)
 
     def state_manage_cb(self, event):
         if self.docking_state=='undocked':
@@ -340,14 +344,22 @@ class ArucoDockingManager(object):
         self.cmd_vel_msg.twist.angular.z = self.cmd_vel_angular
 
     def disable_aruco_detections(self):
-        disable_msg = Bool()
-        disable_msg.data = False
-        self.pub_aruco_detections_enable.publish(disable_msg)
+        rospy.wait_for_service('enable_detections')
+        try:
+            set_enable_detections = rospy.ServiceProxy('enable_detections', SetBool)
+            resp = set_enable_detections(False)
+            return
+        except rospy.ServiceException, e:
+            rospy.logwarn("Service call failed: %s")
 
     def enable_aruco_detections(self):
-        enable_msg = Bool()
-        enable_msg.data = True
-        self.pub_aruco_detections_enable.publish(enable_msg)
+        rospy.wait_for_service('enable_detections')
+        try:
+            set_enable_detections = rospy.ServiceProxy('enable_detections', SetBool)
+            resp = set_enable_detections(True)
+            return
+        except rospy.ServiceException, e:
+            rospy.logwarn("Service call failed: %s")
 
 ##---Callbacks
     def undock_cb(self, event):
