@@ -12,7 +12,7 @@ from geometry_msgs.msg import TwistStamped
 from geometry_msgs.msg import Transform
 from fiducial_msgs.msg import FiducialTransformArray
 from tf.transformations import *
-from std_srvs import SetBool
+from std_srvs.srv import SetBool
 
 class ArucoDockingManager(object):
 
@@ -76,7 +76,7 @@ class ArucoDockingManager(object):
         self.undocking_state = ''
         self.docking_state = 'undocked'
         self.docking_state_msg = String()
-        self.docking_state_msg.data = docking_state
+        self.docking_state_msg.data = self.docking_state
         self.last_docking_state = ''
         self.last_action_state = ''
 
