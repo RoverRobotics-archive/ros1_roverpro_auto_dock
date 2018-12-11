@@ -18,8 +18,7 @@ class ArucoDockingManager(object):
     MANAGER_PERIOD = 0.1
     CMD_VEL_ANGULAR_RATE = 1 #rad/s negative is clockwise
     CMD_VEL_LINEAR_RATE = 0.3 #m/s
-    TURN_RADIANS = -1.8 #a little less than the FOV of the cameras
-    TURN_DURATION = abs(TURN_RADIANS/CMD_VEL_ANGULAR_RATE)
+    TURN_RADIANS = -1 #a little less than the FOV of the cameras
     MIN_TURN_PERIOD = 0.18
     MAX_RUN_TIMEOUT = 240 #in seconds
     ARUCO_SLOW_WARN_TIMEOUT = rospy.Duration(1) #in seconds
