@@ -41,7 +41,7 @@ class ArucoDockingManager(object):
         self.WIGGLE_RADIANS = -0.5
         self.DOCK_ARUCO_NUM = 0
         self.UNDOCK_DISTANCE = 1.0
-        self.UNDOCK_TURN_AMOUNT = 3
+        self.UNDOCK_TURN_AMOUNT = 3.1415
 
         self.MAX_CENTERING_COUNT = 50
 
@@ -421,20 +421,24 @@ class ArucoDockingManager(object):
                 rospy.loginfo("Aruco count %i", self.aruco_callback_counter)
             else:
                 self.aruco_callback_counter = 0
-            try:
-                #If there is no 0 index of transform, then aruco was not found
-                fid_tf = fid_tf_array.transforms[0]
-                self.last_dock_aruco_tf = self.dock_aruco_tf
-                self.dock_aruco_tf = fid_tf
-                self.is_in_view = True
-                #rospy.loginfo('marker detected')
-                [theta, r, theta_bounds] = self.fid2pos(self.dock_aruco_tf) #for debugging
-                if self.docking_state=='searching':
-                    rospy.loginfo('marker detected')
-                    self.openrover_stop()
-                    self.aruco_callback_counter = 0
-                    self.set_docking_state('centering')
-            except:
+
+            if len(fid_tf_array.transforms)>0:
+                for transform in fid_tf_array.transforms:
+                    if transform.fiducial_id == 0:
+                        #If there is no 0 index of transform, then aruco was not found
+                        fid_tf = fid_tf_array.transforms[0]
+                        self.last_dock_aruco_tf = self.dock_aruco_tf
+                        self.dock_aruco_tf = fid_tf
+                        self.is_in_view = True
+                        #rospy.loginfo('marker detected')
+                        [theta, r, theta_bounds] = self.fid2pos(self.dock_aruco_tf) #for debugging
+                        if self.docking_state=='searching':
+                            rospy.loginfo('marker detected')
+                            self.openrover_stop()
+                            self.aruco_callback_counter = 0
+                            self.set_docking_state('centering')
+                        break
+            else:
                 self.is_in_view = False
 
     def openrover_turn_timer_cb(self, event):
