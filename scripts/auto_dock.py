@@ -20,10 +20,10 @@ class ArucoDockingManager(object):
         rospy.loginfo("Starting automatic docking.")
 
         #ROS Params
-        self.DOCK_ARUCO_NUM = 0
-        self.UNDOCK_DISTANCE = 1.0
-        self.UNDOCK_TURN_AMOUNT = 3.1415
-
+        self.DOCK_ARUCO_NUM = rospy.get_param('~dock_aruco_number', 0)
+        self.UNDOCK_DISTANCE = rospy.get_param('~undock_distance', 1.0)
+        self.UNDOCK_TURN_AMOUNT = rospy.get_param('~undock_turn_amount', 3.1415)
+        rospy.loginfo("%f %f %f", self.DOCK_ARUCO_NUM, self.UNDOCK_DISTANCE, self.UNDOCK_TURN_AMOUNT)
         #Constants
         self.MANAGER_PERIOD = 0.1
         self.CMD_VEL_ANGULAR_RATE = 1 #rad/s negative is clockwise
