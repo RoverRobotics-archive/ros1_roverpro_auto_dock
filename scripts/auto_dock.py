@@ -23,7 +23,7 @@ class ArucoDockingManager(object):
         self.DOCK_ARUCO_NUM = rospy.get_param('~dock_aruco_number', 0)
         self.UNDOCK_DISTANCE = rospy.get_param('~undock_distance', 1.0)
         self.UNDOCK_TURN_AMOUNT = rospy.get_param('~undock_turn_amount', 3.1415)
-        rospy.loginfo("%f %f %f", self.DOCK_ARUCO_NUM, self.UNDOCK_DISTANCE, self.UNDOCK_TURN_AMOUNT)
+
         #Constants
         self.MANAGER_PERIOD = 0.1
         self.CMD_VEL_ANGULAR_RATE = 1 #rad/s negative is clockwise
@@ -57,6 +57,7 @@ class ArucoDockingManager(object):
 
         self.is_in_view = False
         self.is_docked = False
+        self.enable_detections = True
 
         self.aruco_last_time = rospy.Time()
         self.last_dock_aruco_tf = Transform()
@@ -91,8 +92,6 @@ class ArucoDockingManager(object):
         #Services
         rospy.wait_for_service('/aruco_detect/enable_detections')
         self.set_enable_detections = rospy.ServiceProxy('/aruco_detect/enable_detections', SetBool)
-
-
 
         #Setup timers
         self.state_manager_timer = rospy.Timer(rospy.Duration(self.MANAGER_PERIOD), self.state_manage_cb, oneshot=False)
@@ -332,18 +331,22 @@ class ArucoDockingManager(object):
         self.cmd_vel_msg.twist.angular.z = self.cmd_vel_angular
 
     def disable_aruco_detections(self):
-        try:
-            resp = self.set_enable_detections(False)
-            return
-        except rospy.ServiceException, e:
-            print "Service call failed: %s"%e
+        if self.enable_detections == True:
+            try:
+                self.enable_detections = False
+                resp = self.set_enable_detections(False)
+                return
+            except rospy.ServiceException, e:
+                print "Service call failed: %s"%e
 
     def enable_aruco_detections(self):
-        try:
-            resp = self.set_enable_detections(True)
-            return
-        except rospy.ServiceException, e:
-            print "Service call failed: %s"%e
+        if self.enable_detections == False:
+            try:
+                self.enable_detections = True
+                resp = self.set_enable_detections(True)
+                return
+            except rospy.ServiceException, e:
+                print "Service call failed: %s"%e
 
     ##---Callbacks
     def undock_cb(self, event):
@@ -379,7 +382,10 @@ class ArucoDockingManager(object):
         if not (self.docking_state=='docked') and not (self.docking_state=='cancelled'):
             self.set_docking_state('undocked')
             self.openrover_stop()
-            self.docking_timer.shutdown()
+            try:
+                self.docking_timer.shutdown()
+            except:
+                pass
 
     def aruco_detect_cb(self, fid_tf_array):
         if not (self.docking_state=='docked') and not (self.docking_state=='cancelled'):
