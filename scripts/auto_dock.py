@@ -60,6 +60,7 @@ class ArucoDockingManager(object):
         self.enable_detections = True
 
         self.aruco_last_time = rospy.Time()
+        self.finished_action_time = rospy.Time.now()
         self.last_dock_aruco_tf = Transform()
         self.dock_aruco_tf = Transform()
         self.docking_state_list = {'undocked', 'searching', 'centering', 'approach', 'final_approach', 'final_wiggle', 'docking_failed', 'docked', 'undock'}
@@ -306,6 +307,7 @@ class ArucoDockingManager(object):
         self.set_action_state('')
         self.cmd_vel_msg.twist.linear.x = 0
         self.cmd_vel_msg.twist.angular.z = 0
+        self.finished_action_time = rospy.Time.now()
         try:
             self.linear_timer.shutdown()
         except:
@@ -413,6 +415,10 @@ class ArucoDockingManager(object):
                 self.aruco_callback_counter = 0
 
             if len(fid_tf_array.transforms)>0:
+                time_delta = (fid_tf_array.header.stamp - self.finished_action_time)
+                if (time_delta) < rospy.Duration(0.2):
+                    rospy.logwarn("auto_dock Old aruco image. Discarding detections. %f ", (time_delta.secs + (time_delta.nsecs/1000000000.0)))
+                    return
                 for transform in fid_tf_array.transforms:
                     if transform.fiducial_id == self.DOCK_ARUCO_NUM:
                         #If there is no 0 index of transform, then dock Aruco was not found
