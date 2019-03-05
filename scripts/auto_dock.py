@@ -26,7 +26,7 @@ class ArucoDockingManager(object):
         self.UNDOCK_TURN_AMOUNT = rospy.get_param('~undock_turn_amount', 3.1415)
         self.START_DELAY = rospy.get_param('~start_delay', 2.0) #in seconds
         self.CMD_VEL_LINEAR_RATE = rospy.get_param('~cmd_vel_linear_rate', 0.3)  #m/s
-        self.CMD_VEL_ANGULAR_RATE = rospy.get_param('~cmd_vel_anugler_rate', 0.8) #rad/s negative is clockwise
+        self.CMD_VEL_ANGULAR_RATE = rospy.get_param('~cmd_vel_angular_rate', 0.8) #rad/s negative is clockwise
         self.MOTOR_RESPONSE_DELAY = rospy.get_param('~motor_response_delay', 0.05) #in secs
         self.ACTION_DELAY = rospy.get_param('~action_delay', 0.3) #amount of time that must pass
                                                                 #  before accepting Aruco detections
