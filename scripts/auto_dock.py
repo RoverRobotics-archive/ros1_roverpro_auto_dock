@@ -27,6 +27,7 @@ class ArucoDockingManager(object):
         self.START_DELAY = rospy.get_param('~start_delay', 2.0) #in seconds
         self.CMD_VEL_LINEAR_RATE = rospy.get_param('~cmd_vel_linear_rate', 0.3)  #m/s
         self.CMD_VEL_ANGULAR_RATE = rospy.get_param('~cmd_vel_anugler_rate', 0.8) #rad/s negative is clockwise
+        self.MOTOR_RESPONSE_DELAY = rospy.get_param('~motor_response_delay', 0.05) #in secs
 
 
         #Constants
@@ -36,7 +37,6 @@ class ArucoDockingManager(object):
         self.ARUCO_WAIT_TIMEOUT = 2 #in seconds
 
         self.CANCELLED_TIMEOUT = 10 #in seconds
-        self.MOTOR_RESPONSE_DELAY = 0.1
 
         self.APPROACH_ANGLE = 0.1
         self.Z_TRANS_OFFSET = 0 #0.5
