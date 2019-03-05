@@ -28,6 +28,8 @@ class ArucoDockingManager(object):
         self.CMD_VEL_LINEAR_RATE = rospy.get_param('~cmd_vel_linear_rate', 0.3)  #m/s
         self.CMD_VEL_ANGULAR_RATE = rospy.get_param('~cmd_vel_anugler_rate', 0.8) #rad/s negative is clockwise
         self.MOTOR_RESPONSE_DELAY = rospy.get_param('~motor_response_delay', 0.05) #in secs
+        self.ACTION_DELAY = rospy.get_param('~action_delay', 0.3) #amount of time that must pass
+                                                                #  before accepting Aruco detections
 
 
         #Constants
@@ -414,7 +416,7 @@ class ArucoDockingManager(object):
 
             if len(fid_tf_array.transforms)>0:
                 time_delta = (fid_tf_array.header.stamp - self.finished_action_time)
-                if (time_delta) < rospy.Duration(0.2):
+                if (time_delta) < rospy.Duration(self.ACTION_DELAY):
                     rospy.logwarn("auto_dock Old aruco image. Discarding detections. %f ", (time_delta.secs + (time_delta.nsecs/1000000000.0)))
                     return
                 for transform in fid_tf_array.transforms:
