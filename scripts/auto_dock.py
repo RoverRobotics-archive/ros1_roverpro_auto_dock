@@ -21,21 +21,21 @@ class ArucoDockingManager(object):
 
         #ROS Params
         self.DOCK_ARUCO_NUM = rospy.get_param('~dock_aruco_number', 0)
+        self.TURN_RADIANS = rospy.get_param('~search_turn_amount', -0.8) #a little less than the FOV of the cameras
         self.UNDOCK_DISTANCE = rospy.get_param('~undock_distance', 1.0)
         self.UNDOCK_TURN_AMOUNT = rospy.get_param('~undock_turn_amount', 3.1415)
+        self.START_DELAY = rospy.get_param('~start_delay', 2.0) #in seconds
+        self.CMD_VEL_LINEAR_RATE = rospy.get_param('~cmd_vel_linear_rate', 0.3)  #m/s
+        self.CMD_VEL_ANGULAR_RATE = rospy.get_param('~cmd_vel_anugler_rate', 0.8) #rad/s negative is clockwise
+
 
         #Constants
         self.MANAGER_PERIOD = 0.1
-        self.CMD_VEL_ANGULAR_RATE = 1 #rad/s negative is clockwise
-        self.CMD_VEL_LINEAR_RATE = 0.3 #m/s
-        self.TURN_RADIANS = -1 #a little less than the FOV of the cameras
-        self.MIN_TURN_PERIOD = 0.1
         self.MAX_RUN_TIMEOUT = 240 #in seconds
         self.ARUCO_SLOW_WARN_TIMEOUT = rospy.Duration(1) #in seconds
         self.ARUCO_WAIT_TIMEOUT = 2 #in seconds
 
         self.CANCELLED_TIMEOUT = 10 #in seconds
-        self.START_DELAY = 2.0
         self.MOTOR_RESPONSE_DELAY = 0.1
 
         self.APPROACH_ANGLE = 0.1
@@ -321,8 +321,6 @@ class ArucoDockingManager(object):
         if self.action_state=='':
             self.set_action_state('turning')
             turn_period = abs(radians/self.CMD_VEL_ANGULAR_RATE) + self.MOTOR_RESPONSE_DELAY
-            # if turn_period < self.MIN_TURN_PERIOD:
-            #     turn_period = self.MIN_TURN_PERIOD
             self.turn_timer = rospy.Timer(rospy.Duration(turn_period), self.openrover_turn_timer_cb, oneshot=True)
             if radians>0:
                 rospy.logdebug("Turn right for %f", turn_period)
