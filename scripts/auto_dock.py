@@ -25,12 +25,21 @@ class ArucoDockingManager(object):
         self.UNDOCK_DISTANCE = rospy.get_param('~undock_distance', 1.0)
         self.UNDOCK_TURN_AMOUNT = rospy.get_param('~undock_turn_amount', 3.1415)
         self.START_DELAY = rospy.get_param('~start_delay', 2.0) #in seconds
-        self.CMD_VEL_LINEAR_RATE = rospy.get_param('~cmd_vel_linear_rate', 0.3)  #m/s
-        self.CMD_VEL_ANGULAR_RATE = rospy.get_param('~cmd_vel_angular_rate', 0.8) #rad/s negative is clockwise
+        self.CMD_VEL_LINEAR_RATE = rospy.get_param('~cmd_vel_linear_rate', 0.25)  #m/s
+        self.CMD_VEL_ANGULAR_RATE = rospy.get_param('~cmd_vel_angular_rate', 0.3) #rad/s negative is clockwise
         self.MOTOR_RESPONSE_DELAY = rospy.get_param('~motor_response_delay', 0.05) #in secs
         self.ACTION_DELAY = rospy.get_param('~action_delay', 0.3) #amount of time that must pass
                                                                 #  before accepting Aruco detections
-
+        #Confirm rosparams
+        rospy.logdebug("DOCK_ARUCO_NUM: %i", self.DOCK_ARUCO_NUM)
+        rospy.logdebug("TURN_RADIANS: %f", self.TURN_RADIANS)
+        rospy.logdebug("UNDOCK_DISTANCE: %f", self.UNDOCK_DISTANCE)
+        rospy.logdebug("UNDOCK_TURN_AMOUNT: %f", self.UNDOCK_TURN_AMOUNT)
+        rospy.logdebug("START_DELAY: %f", self.START_DELAY)
+        rospy.logdebug("CMD_VEL_LINEAR_RATE: %f", self.CMD_VEL_LINEAR_RATE)
+        rospy.logdebug("CMD_VEL_ANGULAR_RATE: %f", self.CMD_VEL_ANGULAR_RATE)
+        rospy.logdebug("MOTOR_RESPONSE_DELAY: %f", self.MOTOR_RESPONSE_DELAY)
+        rospy.logdebug("ACTION_DELAY: %f", self.ACTION_DELAY)
 
         #Constants
         self.MANAGER_PERIOD = 0.1
@@ -98,6 +107,7 @@ class ArucoDockingManager(object):
 
         #Setup timers
         self.state_manager_timer = rospy.Timer(rospy.Duration(self.MANAGER_PERIOD), self.state_manage_cb, oneshot=False)
+
 
     def state_manage_cb(self, event):
         if self.docking_state=='undocked':
@@ -408,6 +418,11 @@ class ArucoDockingManager(object):
             except:
                 self.undocked_timer = rospy.Timer(rospy.Duration(self.ARUCO_WAIT_TIMEOUT), self.wait_now_cb, oneshot=True)
 
+            time_delta = (fid_tf_array.header.stamp - self.finished_action_time)
+            if (time_delta) < rospy.Duration(self.ACTION_DELAY):
+                rospy.logwarn("auto_dock Old aruco image. Discarding detections. %f ", (time_delta.secs + (time_delta.nsecs/1000000000.0)))
+                return
+
             if self.action_state == 'count_aruco_callbacks': #pause while looking for a certain number of images
                 self.aruco_callback_counter = self.aruco_callback_counter + 1
                 rospy.logdebug("Aruco count %i", self.aruco_callback_counter)
@@ -415,10 +430,6 @@ class ArucoDockingManager(object):
                 self.aruco_callback_counter = 0
 
             if len(fid_tf_array.transforms)>0:
-                time_delta = (fid_tf_array.header.stamp - self.finished_action_time)
-                if (time_delta) < rospy.Duration(self.ACTION_DELAY):
-                    rospy.logwarn("auto_dock Old aruco image. Discarding detections. %f ", (time_delta.secs + (time_delta.nsecs/1000000000.0)))
-                    return
                 for transform in fid_tf_array.transforms:
                     if transform.fiducial_id == self.DOCK_ARUCO_NUM:
                         #If there is no 0 index of transform, then dock Aruco was not found
