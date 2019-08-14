@@ -13,6 +13,7 @@ from geometry_msgs.msg import Transform
 from fiducial_msgs.msg import FiducialTransformArray
 from tf.transformations import *
 from std_srvs.srv import SetBool
+from robot_localization.srv import SetPose
 
 class ArucoDockingManager(object):
 
@@ -28,8 +29,9 @@ class ArucoDockingManager(object):
         self.CMD_VEL_LINEAR_RATE = rospy.get_param('~cmd_vel_linear_rate', 0.25)  #m/s
         self.CMD_VEL_ANGULAR_RATE = rospy.get_param('~cmd_vel_angular_rate', 0.3) #rad/s negative is clockwise
         self.MOTOR_RESPONSE_DELAY = rospy.get_param('~motor_response_delay', 0.05) #in secs
-        self.ACTION_DELAY = rospy.get_param('~action_delay', 0.3) #amount of time that must pass
-                                                                #  before accepting Aruco detections
+        self.ACTION_DELAY = rospy.get_param('~action_delay', 0.3) #amount of time that must pass before accepting Aruco detections
+        self.RESET_POSE_DOCKED = rospy.get_param('~reset_pose_docked', True)    
+
         #Confirm rosparams
         rospy.logdebug("DOCK_ARUCO_NUM: %i", self.DOCK_ARUCO_NUM)
         rospy.logdebug("TURN_RADIANS: %f", self.TURN_RADIANS)
@@ -103,7 +105,9 @@ class ArucoDockingManager(object):
 
         #Services
         rospy.wait_for_service('/aruco_detect/enable_detections')
+        rospy.wait_for_service('/set_pose')
         self.set_enable_detections = rospy.ServiceProxy('/aruco_detect/enable_detections', SetBool)
+        self.reset_pose_service = rospy.ServiceProxy('/set_pose', SetPose)
 
         #Setup timers
         self.state_manager_timer = rospy.Timer(rospy.Duration(self.MANAGER_PERIOD), self.state_manage_cb, oneshot=False)
@@ -135,6 +139,7 @@ class ArucoDockingManager(object):
 
         if self.docking_state == 'docked':
             self.disable_aruco_detections()
+            self.reset_pose()
 
         if self.docking_state == 'undock':
             self.disable_aruco_detections()
@@ -223,6 +228,14 @@ class ArucoDockingManager(object):
         if self.action_state == '':
             self.full_reset()
             self.set_docking_state('docking_failed')
+
+    def reset_pose(self):
+        if self.RESET_POSE_DOCKED:
+            docked_pose = SetPose()
+            docked_pose.pose.pose.position = [0.0,0.0,0.0]
+            docked_pose.pose.pose.orientation = [0.0,0.0,0.0]
+            docked_pose.pose.pose.covariance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            self.reset_pose_service(docked_pose)
 
     def undock_state_fun(self):
         if self.action_state == 'jogging':
