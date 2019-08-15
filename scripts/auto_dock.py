@@ -23,7 +23,6 @@ class ArucoDockingManager(object):
 
     def __init__(self):
         rospy.loginfo("Starting automatic docking.")
-
         #ROS Params
         self.DOCK_ARUCO_NUM = rospy.get_param('~dock_aruco_number', 0)
         self.TURN_RADIANS = rospy.get_param('~search_turn_amount', -0.8) #a little less than the FOV of the cameras
@@ -99,6 +98,12 @@ class ArucoDockingManager(object):
         self.pub_docking_state = rospy.Publisher('/auto_dock/state', String, queue_size=1, latch=True)
         self.pub_action_state = rospy.Publisher('/auto_dock/action_state', String, queue_size=1, latch=True)
 
+        #Services
+        # rospy.wait_for_service('/aruco_detect/enable_detections') # commented out to not stop when not running aruco stuff
+        self.set_enable_detections = rospy.ServiceProxy('/aruco_detect/enable_detections', SetBool)
+        rospy.wait_for_service('/set_pose')
+        self.set_pose = rospy.ServiceProxy('/set_pose', SetPose)
+
         #Intialize Subscribers
         self.sub_aruco_detect = rospy.Subscriber("/fiducial_transforms",FiducialTransformArray, self.aruco_detect_cb, queue_size=1)
         self.sub_openrover_charging = rospy.Subscriber("rr_openrover_basic/charging",Bool, self.openrover_charging_cb, queue_size=1)
@@ -106,12 +111,6 @@ class ArucoDockingManager(object):
         self.sub_undock = rospy.Subscriber("/auto_dock/undock", Bool, self.undock_cb, queue_size=1)
         self.sub_cancel_auto_dock = rospy.Subscriber("/auto_dock/cancel", Bool, self.cancel_cb, queue_size=1)
         self.sub_start = rospy.Subscriber("/auto_dock/dock", Bool, self.start_cb, queue_size=1)
-
-        #Services
-        rospy.wait_for_service('/aruco_detect/enable_detections')
-        rospy.wait_for_service('/set_pose')
-        self.set_enable_detections = rospy.ServiceProxy('/aruco_detect/enable_detections', SetBool)
-        self.reset_pose_service = rospy.ServiceProxy('/set_pose', SetPose)
 
         #Setup timers
         self.state_manager_timer = rospy.Timer(rospy.Duration(self.MANAGER_PERIOD), self.state_manage_cb, oneshot=False)
@@ -235,11 +234,10 @@ class ArucoDockingManager(object):
 
     def reset_pose(self):
         if self.RESET_POSE_DOCKED:
-            rospy.loginfo("RESETING EKF POSE")
             docked_pose = SetPoseRequest()#PoseWithCovarianceStamped() #SetPose()
             # docked_pose.pose.pose.pose.position = [0.0,0.0,0.0]
             docked_pose.pose.pose.pose.position.x = 0.0
-            docked_pose.pose.pose.pose.position.y = 0.0
+            docked_pose.pose.pose.pose.position.y = 5.0
             docked_pose.pose.pose.pose.position.z = 0.0
 
             # docked_pose.pose.pose.pose.orientation = [0.0,0.0,0.0]
@@ -250,9 +248,11 @@ class ArucoDockingManager(object):
 
             docked_pose.pose.pose.covariance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
             # try:    
-            self.reset_pose_service = rospy.ServiceProxy('/set_pose', SetPose)
-            print(SetPose())
-            test = self.reset_pose_service(docked_pose)
+            # self.reset_pose_service = rospy.ServiceProxy('/set_pose', SetPose)
+            # print(self.set_pose)
+            # print(self.set_pose())
+            print("RESETING POSE")
+            self.set_pose(docked_pose)
             # except:
             #     rospy.loginfo("failed to reset pose")            
 	    # self.reset_pose_service(docked_pose)
