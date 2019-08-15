@@ -13,7 +13,11 @@ from geometry_msgs.msg import Transform
 from fiducial_msgs.msg import FiducialTransformArray
 from tf.transformations import *
 from std_srvs.srv import SetBool
+from robot_localization.srv import SetPoseRequest
+from robot_localization.srv import SetPoseResponse
 from robot_localization.srv import SetPose
+from geometry_msgs.msg import PoseWithCovarianceStamped
+
 
 class ArucoDockingManager(object):
 
@@ -231,11 +235,27 @@ class ArucoDockingManager(object):
 
     def reset_pose(self):
         if self.RESET_POSE_DOCKED:
-            docked_pose = SetPose()
-            docked_pose.pose.pose.position = [0.0,0.0,0.0]
-            docked_pose.pose.pose.orientation = [0.0,0.0,0.0]
+            rospy.loginfo("RESETING EKF POSE")
+            docked_pose = SetPoseRequest()#PoseWithCovarianceStamped() #SetPose()
+            # docked_pose.pose.pose.pose.position = [0.0,0.0,0.0]
+            docked_pose.pose.pose.pose.position.x = 0.0
+            docked_pose.pose.pose.pose.position.y = 0.0
+            docked_pose.pose.pose.pose.position.z = 0.0
+
+            # docked_pose.pose.pose.pose.orientation = [0.0,0.0,0.0]
+            docked_pose.pose.pose.pose.orientation.x = 0.0
+            docked_pose.pose.pose.pose.orientation.y = 0.0
+            docked_pose.pose.pose.pose.orientation.z = 0.0
+            docked_pose.pose.pose.pose.orientation.w = 0.0
+
             docked_pose.pose.pose.covariance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-            self.reset_pose_service(docked_pose)
+            # try:    
+            self.reset_pose_service = rospy.ServiceProxy('/set_pose', SetPose)
+            print(SetPose())
+            test = self.reset_pose_service(docked_pose)
+            # except:
+            #     rospy.loginfo("failed to reset pose")            
+	    # self.reset_pose_service(docked_pose)
 
     def undock_state_fun(self):
         if self.action_state == 'jogging':
@@ -260,6 +280,8 @@ class ArucoDockingManager(object):
             self.last_docking_state = self.docking_state
             self.docking_state = new_docking_state
             rospy.logdebug("new state: %s, last state: %s", self.docking_state, self.last_docking_state)
+        if self.docking_state == 'docked':
+            self.reset_pose()
 
     def set_action_state(self, new_action_state):
         if not self.action_state == new_action_state:
