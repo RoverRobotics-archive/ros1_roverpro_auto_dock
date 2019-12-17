@@ -95,7 +95,7 @@ class ArucoDockingManager(object):
 
         #Intialize Subscribers
         self.sub_aruco_detect = rospy.Subscriber("/fiducial_transforms",FiducialTransformArray, self.aruco_detect_cb, queue_size=1)
-        self.sub_openrover_charging = rospy.Subscriber("rr_openrover_basic/charging",Bool, self.openrover_charging_cb, queue_size=1)
+        self.sub_openrover_charging = rospy.Subscriber("rr_openrover_driver/charging",Bool, self.openrover_charging_cb, queue_size=1)
 
         self.sub_undock = rospy.Subscriber("/auto_dock/undock", Bool, self.undock_cb, queue_size=1)
         self.sub_cancel_auto_dock = rospy.Subscriber("/auto_dock/cancel", Bool, self.cancel_cb, queue_size=1)
